@@ -1312,7 +1312,7 @@ class DocumentParser {
     
     private function _get_snip_properties($snip_call)
     {
-        $snip_name  = $snip_call['name'];
+        $snip_name  = strtolower($snip_call['name']);
         
         if(isset($this->snippetCache[$snip_name]))
         {
@@ -1332,6 +1332,7 @@ class DocumentParser {
             if($this->db->getRecordCount($result) == 1)
             {
                 $row = $this->db->getRow($result);
+                $row['name'] = strtolower($row['name']);
                 if($row['name'] == $snip_name)
                 {
                     $snippetObject['name']       = $row['name'];
@@ -2753,6 +2754,7 @@ class DocumentParser {
      * @return string
      */
     function runSnippet($snippetName, $params= array ()) {
+        $snippetName = strtolower($snippetName);
         if (isset ($this->snippetCache[$snippetName])) {
             $snippet = $this->snippetCache[$snippetName];
             $properties = $this->snippetCache[$snippetName . "Props"];
