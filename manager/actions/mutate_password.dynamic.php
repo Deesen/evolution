@@ -3,13 +3,42 @@ if(IN_MANAGER_MODE!="true") die("<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please
 if(!$modx->hasPermission('change_password')) {
 	$modx->webAlertAndQuit($_lang["error_no_privileges"]);
 }
+
+global $_style;
+
+$tpl =& $modx->manager->tpl;
+$tpl->setTitle($_lang['change_password']);
+
+$tpl->setActionButtons(array(
+	'ButtonX'=>array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.userform.save.click();', 'class'=>'transition'),
+	'Button5'=>array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.location.href=\'index.php?a=2\'', 'class'=>'transition'),
+));
+
+$tpl->addBody(array(
+	'userform'=>array(
+		'type'=>'form',
+		'action'=>'index.php?a=34',
+		'method'=>'post',
+		'content'=>array(
+			'id'=>array('type'=>'hidden', 'value'=>$_GET['id']),
+			'message'=>array('type'=>'message', 'value'=>$_lang['change_password_message']),
+			'pass1'=>array('type'=>'password', 'label'=>$_lang['change_password_new']),
+			'pass2'=>array('type'=>'password', 'label'=>$_lang['change_password_confirm']),
+			'save'=>array('type'=>'submit', 'displayNone'=>true),
+		)
+	),
+));
+
+echo $tpl->renderFullDom();
 ?>
+
+<hr/>
 
 <h1><?php echo $_lang['change_password']?></h1>
 <div id="actions">
 	<ul class="actionButtons">
 		<li class="transition"><a href="javascript:void(0)" onclick="documentDirty=false; document.userform.save.click();"><img src="<?php echo $_style["icons_save"]?>" /> <?php echo $_lang['save']?></a></li>
-	  <li id="Button5" class="transition"><a href="#" onclick="documentDirty=false;document.location.href='index.php?a=2';"><img src="<?php echo $_style["icons_cancel"] ?>" /> <?php echo $_lang['cancel']?></a></li>
+		<li id="Button5" class="transition"><a href="#" onclick="documentDirty=false;document.location.href='index.php?a=2';"><img src="<?php echo $_style["icons_cancel"] ?>" /> <?php echo $_lang['cancel']?></a></li>
 	</ul>
 </div>
 <div class="section">
