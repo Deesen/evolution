@@ -11,10 +11,14 @@ global $_PAGE; // page view state object. Usage $_PAGE['vs']['propertyname'] = $
 class ManagerAPI {
 	
 	var $action; // action directive
-
+	var $tpl; // template- / manager-output object
+	
 	function __construct(){
 		global $action;
 		$this->action = $action; // set action directive
+		
+		require(MODX_MANAGER_PATH.'includes/extenders/manager.template.class.inc.php');
+		$this->tpl = new ManagerTemplateEngine;
 	}
 	
 	function initPageViewState($id=0){
