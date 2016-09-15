@@ -4,9 +4,10 @@ if(!$modx->hasPermission('change_password')) {
 	$modx->webAlertAndQuit($_lang["error_no_privileges"]);
 }
 
-global $_style;
+global $_style, $_lang;
 
 $tpl =& $modx->manager->tpl;
+$tpl->setBodyGrid('fullWidth');
 $tpl->setTitle($_lang['change_password']);
 
 $tpl->setActionButtons(array(
@@ -16,14 +17,16 @@ $tpl->setActionButtons(array(
 
 $tpl->addBody(array(
 	'userform'=>array(
+		'position'=>'block1',
+		'grid'=>'2columns',
 		'type'=>'form',
 		'action'=>'index.php?a=34',
 		'method'=>'post',
 		'content'=>array(
 			'id'=>array('type'=>'hidden', 'value'=>$_GET['id']),
-			'message'=>array('type'=>'message', 'value'=>$_lang['change_password_message']),
-			'pass1'=>array('type'=>'password', 'label'=>$_lang['change_password_new']),
-			'pass2'=>array('type'=>'password', 'label'=>$_lang['change_password_confirm']),
+			'message'=>array('type'=>'message','label'=>$_lang['change_password_message'], 'position'=>'block1'),
+			'pass1'=>array('type'=>'password', 'label'=>$_lang['change_password_new'],     'position'=>'block2'),
+			'pass2'=>array('type'=>'password', 'label'=>$_lang['change_password_confirm'], 'position'=>'block3'),
 			'save'=>array('type'=>'submit', 'displayNone'=>true),
 		)
 	),
@@ -32,6 +35,7 @@ $tpl->addBody(array(
 echo $tpl->renderFullDom();
 ?>
 
+<!--
 <hr/>
 
 <h1><?php echo $_lang['change_password']?></h1>
@@ -65,3 +69,4 @@ echo $tpl->renderFullDom();
 </form>
 </div>
 </div>
+-->

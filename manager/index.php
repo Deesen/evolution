@@ -135,8 +135,8 @@ include_once "config.inc.php";
 // initiate the content manager class
 include_once "document.parser.class.inc.php";
 $modx = new DocumentParser;
-$modx->loadExtension("ManagerAPI");
 $modx->getSettings();
+$modx->loadExtension("ManagerAPI");
 $etomite = &$modx; // for backward compatibility
 $modx->tstart = $tstart;
 $modx->mstart = $mstart;
