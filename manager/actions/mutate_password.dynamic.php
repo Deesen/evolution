@@ -7,7 +7,9 @@ if(!$modx->hasPermission('change_password')) {
 global $_style, $_lang;
 
 $tpl =& $modx->manager->tpl;
+
 $tpl->setBodyGrid('fullWidth');
+// $tpl->setTabs(null);
 $tpl->setTitle($_lang['change_password']);
 
 $tpl->setActionButtons(array(
@@ -16,17 +18,27 @@ $tpl->setActionButtons(array(
 ));
 
 $tpl->addBody(array(
+	'message'=>array(
+		'position'=>'message',
+		'type'=>'message',
+		'label'=>$_lang['change_password_message']
+	),
 	'userform'=>array(
 		'position'=>'block1',
 		'grid'=>'2columns',
 		'type'=>'form',
 		'action'=>'index.php?a=34',
 		'method'=>'post',
+		'inputHidden'=>array(
+			0=>array('value'=>$_GET['id'])
+		),
 		'content'=>array(
-			'id'=>array('type'=>'hidden', 'value'=>$_GET['id']),
-			'message'=>array('type'=>'message','label'=>$_lang['change_password_message'], 'position'=>'block1'),
-			'pass1'=>array('type'=>'password', 'label'=>$_lang['change_password_new'],     'position'=>'block2'),
+			'section1'=>array('type'=>'section', 'label'=>$_lang['change_password']),
+			'pass1'=>array('type'=>'password', 'label'=>$_lang['change_password_new'],     'position'=>'block2', 'section'=>''),
 			'pass2'=>array('type'=>'password', 'label'=>$_lang['change_password_confirm'], 'position'=>'block3'),
+			'section2'=>array('type'=>'section', 'label'=>$_lang['change_password']),
+			'pass3'=>array('type'=>'password', 'label'=>$_lang['change_password_new'],     'position'=>'block2', 'section'=>''),
+			'pass4'=>array('type'=>'password', 'label'=>$_lang['change_password_confirm'], 'position'=>'block3'),
 			'save'=>array('type'=>'submit', 'displayNone'=>true),
 		)
 	),
