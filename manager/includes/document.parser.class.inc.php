@@ -1862,6 +1862,71 @@ class DocumentParser {
         return $source;
     }
 
+	/**
+	 * Parse a source string.
+	 *
+	 * Handles most MODX tags. Exceptions include:
+	 *   - uncached snippet tags [!...!]
+	 *   - URL tags [~...~]
+	 *
+	 * @param string $source
+	 * @return string
+	 */
+	function parseManagerDocumentSource($source) {
+		// set the number of times we are to parse the document source
+		$this->minParserPasses= empty ($this->minParserPasses) ? 2 : $this->minParserPasses;
+		$this->maxParserPasses= empty ($this->maxParserPasses) ? 10 : $this->maxParserPasses;
+		$passes= $this->minParserPasses;
+		for ($i= 0; $i < $passes; $i++) {
+			// get source length if this is the final pass
+			if ($i == ($passes -1))
+				$st= strlen($source);
+			if ($this->dumpSnippets == 1) {
+				$this->snippetsCode .= "<fieldset><legend><b style='color: #821517;'>PARSE PASS " . ($i +1) . "</b></legend><p>The following snippets (if any) were parsed during this pass.</p>";
+			}
+
+			// invoke OnParseDocument event
+			// $this->documentOutput= $source; // store source code so plugins can
+			// $this->invokeEvent("OnParseDocument"); // work on it via $modx->documentOutput
+			// $source= $this->documentOutput;
+			/*
+			$source= $this->ignoreCommentedTagsContent($source);
+
+			$source= $this->mergeConditionalTagsContent($source);
+
+			$source = $this->mergeSettingsContent($source);
+
+			// combine template and document variables
+			$source= $this->mergeDocumentContent($source);
+			// replace settings referenced in document
+			$source= $this->mergeSettingsContent($source);
+			// replace HTMLSnippets in document
+			$source= $this->mergeChunkContent($source);
+			// insert META tags & keywords
+			if(isset($this->config['show_meta']) && $this->config['show_meta']==1) {
+				$source= $this->mergeDocumentMETATags($source);
+			}
+			*/
+			// find and merge snippets
+			$source= $this->evalSnippets($source);
+			// find and replace Placeholders (must be parsed last) - Added by Raymond
+			// $source= $this->mergePlaceholderContent($source);
+
+			$source = $this->mergeSettingsContent($source);
+
+			if ($this->dumpSnippets == 1) {
+				$this->snippetsCode .= "</fieldset><br />";
+			}
+			if ($i == ($passes -1) && $i < ($this->maxParserPasses - 1)) {
+				// check if source length was changed
+				$et= strlen($source);
+				if ($st != $et)
+					$passes++; // if content change then increase passes because
+			} // we have not yet reached maxParserPasses
+		}
+		return $source;
+	}
+
     /**
      * Starts the parsing operations.
      * 

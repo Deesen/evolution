@@ -119,17 +119,15 @@ class ManagerTemplateEngine {
 
 	function renderFullDom()
 	{
+		global $modx;
+		
 		// Prepare placeholders
 		$placeholders = array(
-			'title'=>$this->dom['title'],
-			'css'=>$this->mergeDomCss(),
-			'javascript'=>$this->mergeDomJs(),
-			'OnManagerMainFrameHeaderHTMLBlock'=>$this->dom['header']['OnManagerMainFrameHeaderHTMLBlock'],
-			'actionButtons'=>$this->mergeDomActionButtons(),
-			'body'=>$this->mergeDomBody(),
+			'title'=>$this->dom['title']
 		);
 		
-		return $this->fetchTpl('body', $placeholders);
+		$source = $this->fetchTpl('body', $placeholders);
+		return $modx->parseManagerDocumentSource($source);
 	}
 
 	function mergeDomCss()
@@ -148,17 +146,36 @@ class ManagerTemplateEngine {
 			if(isset($js['src'])) 		$output .= '	<script src="'.$js['src'].'" type="text/javascript"></script>'."\n"; 
 			if(isset($js['script']))	$output .= '	<script type="text/javascript">'.$js['script'].'</script>'."\n";
 		};
+		
+		$output .= $this->dom['header']['OnManagerMainFrameHeaderHTMLBlock'];
+		
 		return $output;
 	}
 
-	function mergeDomActionButtons()
+	function mergeDomActionButtons($outerTpl, $rowTpl)
 	{
+		$outerTpl = !empty($outerTpl) ? $outerTpl : 'actionButtons';
+		$rowTpl = !empty($rowTpl) ? $rowTpl : 'actionButton';
+
 		$output = '';
 		foreach($this->dom['actionButtons'] as $id=>$placeholders) {
-			$output .= $this->fetchTpl('actionButton', $placeholders);
+			$output .= $this->fetchTpl($rowTpl, $placeholders);
 		};
-		
-		return $this->fetchTpl('actionButtons', array('actionButtons'=>$output));
+
+		return $this->fetchTpl($outerTpl, array('actionButtons'=>$output));
+	}
+
+	function mergeDomAlerts($outerTpl, $rowTpl)
+	{
+		$outerTpl = !empty($outerTpl) ? $outerTpl : 'actionButtons';
+		$rowTpl = !empty($rowTpl) ? $rowTpl : 'actionButton';
+
+		$output = '';
+		foreach($this->dom['actionButtons'] as $id=>$placeholders) {
+			$output .= $this->fetchTpl($rowTpl, $placeholders);
+		};
+
+		return $this->fetchTpl($outerTpl, array('actionButtons'=>$output));
 	}
 
 	function mergeDomBody()
@@ -171,9 +188,14 @@ class ManagerTemplateEngine {
 				case 'form':
 					$positions[$pos] .= $this->renderForm($id, $el);
 					break;
+				case 'message':
+					$positions[$pos] .= $this->fetchTpl('body.message', $el);
+					break;
+				/*
 				case 'html':
 					// $blocks = $el['html']."\n";
 					break;
+				*/
 			}
 		};
 
@@ -189,8 +211,12 @@ class ManagerTemplateEngine {
 		} else {
 			$tplFile = MODX_MANAGER_PATH . 'media/style/' . $manager_theme . '/tpl/' . $tpl . '.html';
 			if (!file_exists($tplFile)) $tplFile = MODX_MANAGER_PATH . 'media/style/common/tpl/' . $tpl . '.html';
-			$template = file_get_contents($tplFile);
-			$this->templates[$tpl] = $template;
+			if (file_exists($tplFile)) {
+				$template              = file_get_contents($tplFile);
+				$this->templates[$tpl] = $template;
+			} else {
+				return 'Template not found: '.$tpl;
+			}
 		}
 		if($noParse) return $template;
 		return $this->parsePlaceholders($template, $placeholders);
@@ -199,6 +225,14 @@ class ManagerTemplateEngine {
 	function renderForm($formId, $form)
 	{
 		$positions = array();
+		$section = false;
+		$content = '';
+		$placeholder = array(
+			'formId'=>$formId,
+			'action'=>$form['action'],
+			'method'=>isset($form['method']) ? $form['method'] : 'post',
+		);
+		
 		foreach($form['content'] as $id=>$el) {
 			
 			$pos = isset($el['position']) ? $el['position'] : 'default';
@@ -209,6 +243,10 @@ class ManagerTemplateEngine {
 			));
 			
 			switch($el['type']) {
+				case 'section':
+					if($section && $section != $el['label']) $content .= $this->fetchTpl('grid.'.$form['grid'], $positions);
+					$section = $el['label'];
+					break;
 				case 'hidden':
 					// @todo: Filter out and append to end of form?
 					$positions[$pos] .= '	<input type="hidden" name="'.$id.'" value="'.$el['value'].'" />';
@@ -227,12 +265,8 @@ class ManagerTemplateEngine {
 			$positions[$pos] .= "\n";
 		}
 		
-		$placeholder = array(
-			'formId'=>$formId,
-			'action'=>$form['action'],
-			'method'=>isset($form['method']) ? $form['method'] : 'post',
-			'content'=>$this->fetchTpl('grid.'.$form['grid'], $positions)
-		);
+		if($section) $content .= $this->fetchTpl('grid.'.$form['grid'], $positions);
+		$placeholder['content'] = $content;
 
 		return $this->fetchTpl('form', $placeholder);
 	}
