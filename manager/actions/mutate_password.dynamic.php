@@ -6,45 +6,42 @@ if(!$modx->hasPermission('change_password')) {
 
 global $_style, $_lang;
 
-$tpl =& $modx->manager->tpl;
+$tpe =& $modx->manager->tpl;
 
-$tpl->setBodyGrid('fullWidth');
-// $tpl->setTabs(null);
-$tpl->setTitle($_lang['change_password']);
+$tpe->setActionTemplate('mutate_password.dynamic')
+	->setTitle($_lang['change_password'])
+	
+	// ->alert('test')
+	// ->alert('test222', 'error')
 
-$tpl->setActionButtons(array(
-	'ButtonX'=>array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.userform.save.click();', 'class'=>'transition'),
-	'Button5'=>array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.location.href=\'index.php?a=2\'', 'class'=>'transition'),
-));
+	->setActionButtons(array(
+		'Button1'=>array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.userform.save.click();', 'class'=>'transition'),
+		'Button5'=>array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>"documentDirty=false; document.location.href='index.php?a=2'", 'class'=>'transition'),
+	))
 
-$tpl->addBody(array(
-	'message'=>array(
-		'position'=>'message',
-		'type'=>'message',
-		'label'=>$_lang['change_password_message']
-	),
-	'userform'=>array(
-		'position'=>'block1',
-		'grid'=>'2columns',
-		'type'=>'form',
-		'action'=>'index.php?a=34',
-		'method'=>'post',
-		'inputHidden'=>array(
-			0=>array('value'=>$_GET['id'])
-		),
-		'content'=>array(
-			'section1'=>array('type'=>'section', 'label'=>$_lang['change_password']),
-			'pass1'=>array('type'=>'password', 'label'=>$_lang['change_password_new'],     'position'=>'block2', 'section'=>''),
-			'pass2'=>array('type'=>'password', 'label'=>$_lang['change_password_confirm'], 'position'=>'block3'),
-			'section2'=>array('type'=>'section', 'label'=>$_lang['change_password']),
-			'pass3'=>array('type'=>'password', 'label'=>$_lang['change_password_new'],     'position'=>'block2', 'section'=>''),
-			'pass4'=>array('type'=>'password', 'label'=>$_lang['change_password_confirm'], 'position'=>'block3'),
-			'save'=>array('type'=>'submit', 'displayNone'=>true),
-		)
-	),
-));
+	->addForm('userform', 'index.php?a=34', 'post')
+	
+	->addTab('userform', 'general', 'general label', '2columns')
+	->addTab('userform', 'secondary', 'secondary label', '1column')
+	
+	->addSection('userform', 'first', $_lang['change_password'],       '1column')
+	->addSection('userform', 'second', $_lang['change_password'].' 2', '2columns')
+	
+	->addFormField('userform','id',		'hidden',	$_GET['id'])
+	->addFormField('userform','save',	'submit')
+	
+	->addFormField('userform','pass1',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'general','section'=>'general','position'=>'block1'))
+	->addFormField('userform','pass2',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'general','section'=>'general','position'=>'block1'))
+	
+	// TEST
+	->addFormField('userform','pass3',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'general','section'=>'general','position'=>'block1'))
+	->addFormField('userform','pass4',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'general','section'=>'general','position'=>'block1'))
+	->addFormField('userform','pass5',	'password',	'', $_lang['change_password_new'],     array('order'=>3, 'tab'=>'general','section'=>'general','position'=>'block2'))
+	->addFormField('userform','pass6',	'password',	'', $_lang['change_password_confirm'], array('order'=>4, 'tab'=>'general','section'=>'general','position'=>'block2'))
 
-echo $tpl->renderFullDom();
+;
+
+echo $tpe->renderFullDom();
 ?>
 
 <!--
