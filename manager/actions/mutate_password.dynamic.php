@@ -19,25 +19,25 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 		'Button5'=>array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>"documentDirty=false; document.location.href='index.php?a=2'", 'class'=>'transition'),
 	))
 
-	->addForm('userform', 'index.php?a=34', 'post')
+	->addForm('userform', 'userform', 'index.php?a=34', 'post')
 	
-	->addTab('userform', 'general', 'general label', '2columns')
-	->addTab('userform', 'secondary', 'secondary label', '1column')
-	
-	->addSection('userform', 'first', $_lang['change_password'],       '1column')
-	->addSection('userform', 'second', $_lang['change_password'].' 2', '2columns')
-	
+	->addTab('userform', 'general', 'general label', '1column')
+	->addTab('userform', 'secondary', 'secondary label', '2columns')
+
 	->addFormField('userform','id',		'hidden',	$_GET['id'])
 	->addFormField('userform','save',	'submit')
 	
-	->addFormField('userform','pass1',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'general','section'=>'general','position'=>'block1'))
-	->addFormField('userform','pass2',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'general','section'=>'general','position'=>'block1'))
+	->addSection('userform', 'first', $_lang['change_password'],       '2columns', 'block1')
+	->addFormField('userform','pass1',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'general','section'=>'first','position'=>'block1'))
+	->addFormField('userform','pass2',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'general','section'=>'first','position'=>'block1'))
 	
 	// TEST
-	->addFormField('userform','pass3',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'general','section'=>'general','position'=>'block1'))
-	->addFormField('userform','pass4',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'general','section'=>'general','position'=>'block1'))
-	->addFormField('userform','pass5',	'password',	'', $_lang['change_password_new'],     array('order'=>3, 'tab'=>'general','section'=>'general','position'=>'block2'))
-	->addFormField('userform','pass6',	'password',	'', $_lang['change_password_confirm'], array('order'=>4, 'tab'=>'general','section'=>'general','position'=>'block2'))
+		
+	->addSection('userform', 'second', $_lang['change_password'].' 2', '2columns', 'block2')
+	->addFormField('userform','pass3',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'secondary','section'=>'first','position'=>'block1'))
+	->addFormField('userform','pass4',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'secondary','section'=>'first','position'=>'block2'))
+	->addFormField('userform','pass5',	'password',	'', $_lang['change_password_new'],     array('order'=>3, 'tab'=>'secondary','section'=>'second','position'=>'block1'))
+	->addFormField('userform','pass6',	'password',	'', $_lang['change_password_confirm'], array('order'=>4, 'tab'=>'secondary','section'=>'second','position'=>'block2'))
 
 ;
 

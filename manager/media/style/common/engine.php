@@ -8,6 +8,7 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css');
 $this->registerScriptSrc('jquery', '[(mgr_jquery_path)]', '3.1.0');
 $this->registerScriptSrc('mootools', 'media/script/mootools/mootools.js', '1.12');
 $this->registerScriptSrc('moodx', 'media/script/mootools/moodx.js');
+$this->registerScriptSrc('tabs', 'media/script/tabpane.js');
 
 $this->registerScriptFromFile('modx_jq', 'media/script/manager.js');
 

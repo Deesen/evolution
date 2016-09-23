@@ -52,18 +52,21 @@ class ManagerTemplateEngine {
 		return $this;
 	}
 
-	function addForm($id, $action, $method) {
+	function addForm($id, $name, $action, $method) {
 		$this->dom['forms'][$id] = array(
+			'name'=>$name,
+			'id'=>$id,
 			'action'=>$action,
 			'method'=>$method
 		);
 		return $this;
 	}
 
-	function addSection($formid, $section, $label, $grid='1column') {
+	function addSection($formid, $section, $label, $grid='1column', $position='default') {
 		$this->dom['forms'][$formid]['sections'][$section] = array(
 			'label'=>$label,
 			'grid'=>$grid,
+			'position'=>$position
 		);
 		return $this;
 	}
@@ -132,37 +135,6 @@ class ManagerTemplateEngine {
 	function setPlaceholder($key, $value) {
 		$this->placeholders[$key] = $value;
 		return $this;
-	}
-
-	function parsePlaceholders($source, $placeholder=array())
-	{
-		global $modx, $_lang, $_style;
-
-		$placeholder = array_merge($this->placeholders, $placeholder);
-
-		$source = $modx->mergeSettingsContent($source);
-
-		// Get list of all existing [+placeholders+]
-		$tags = $modx->getTagsFromContent($source);
-
-		if(!empty($tags)) {
-			foreach($tags[1] as $key=>$tag) {
-				// Replace language
-				if (substr($tag, 0, 5) == 'lang.') {
-					$langKey = substr($tag, 5);
-					$value   = isset($_lang[$langKey]) ? $_lang[$langKey] : '';
-				} else if (substr($tag, 0, 6) == 'style.') {
-					$styleKey = substr($tag, 6);
-					$value = isset($_style[$styleKey]) ? $_style[$styleKey] : '';
-					// Replace normal placeholders
-				} else {
-					$value = isset($placeholder[$tag]) ? $placeholder[$tag] : '';
-				}
-				$source = str_replace($tags[0][$key], $value, $source);
-			}
-		}
-
-		return $source;
 	}
 
 	function renderFullDom()
@@ -275,60 +247,165 @@ class ManagerTemplateEngine {
 		return $this->fetchTpl('actions/'.$this->actionTpl, array());
 	}
 	
-	function mergeFormInputs($form, $outerTpl, $rowTpl, $useTabs=true, $useSections=true, $filter='', $sortBy='order')
+	function mergeFormInputs($formId, $outerTpl, $rowTpl, $useTabs=true, $useSections=true, $filter='', $sortBy='order')
 	{
-		if($useTabs && empty($this->dom['forms'][$form]['tabs'])) $useTabs = false;
-		if($useSections && empty($this->dom['forms'][$form]['sections'])) $useTabs = false;
+		if($useTabs && empty($this->dom['forms'][$formId]['tabs'])) $useTabs = false;
+		if($useSections && empty($this->dom['forms'][$formId]['sections'])) $useTabs = false;
+
+		$form = $this->dom['forms'][$formId];
+		$inputs = $this->dom['forms'][$formId]['inputs'];
+		$tabs = $useTabs ? $this->dom['forms'][$formId]['tabs'] : false;
+		$sections = $useSections ? $this->dom['forms'][$formId]['sections'] : false;
+
+		$output = '';
 		
-		$inputs = $this->dom['forms'][$form]['inputs'];
-		$tabs = $useTabs ? $this->dom['forms'][$form]['tabs'] : false;
-		$sections = $useSections ? $this->dom['forms'][$form]['sections'] : false;
-
-		$positions = array();
-		$section = false;
-		$content = '';
-		$placeholder = array(
-			'formId'=>$form['name'],
-			'action'=>$form['action'],
-			'method'=>isset($form['method']) ? $form['method'] : 'post',
-		);
-
-		foreach($inputs as $id=>$el) {
-
-			$pos = isset($el['position']) ? $el['position'] : 'default';
-
-			$placeholders = array_merge($el, array(
-				'id'=>$id,
-				'formId'=>$formId
-			));
-
-			switch($el['type']) {
-				case 'section':
-					if($section && $section != $el['label']) $content .= $this->fetchTpl('grid.'.$form['grid'], $positions);
-					$section = $el['label'];
-					break;
-				case 'hidden':
-					// @todo: Filter out and append to end of form?
-					$positions[$pos] .= '	<input type="hidden" name="'.$id.'" value="'.$el['value'].'" />';
-					break;
-				case 'password':
-					$positions[$pos] .= $this->fetchTpl('form.input.password', $placeholders);
-					break;
-				case 'message':
-					$positions[$pos] .= $this->fetchTpl('form.message', $placeholders);
-					break;
-				case 'submit':
-					$displayNone = $el['displayNone'] == true ? ' style="display:none"' : '';
-					$positions[$pos] .= '	<input type="submit" value="'.$el['label'].'" name="save"'.$displayNone.'>';
-					break;
+		// HANDLE TABS
+		if($tabs) {
+			// BUILD ARRAY WITH ALL INPUTS PER TAB
+			foreach($inputs as $id=>$el) {
+				$elTab = isset($el['params']['tab']) ? $el['params']['tab'] : false;
+				if($elTab && isset($tabs[$elTab])) {
+					$tabs[$elTab]['content'][$id] = $el; 
+				}
 			}
-			$positions[$pos] .= "\n";
+			
+			// BUILD ARRAY WITH ALL INPUTS PER SECTION
+			foreach($tabs as $tabId=>$tab) {
+				$tabSections = array();
+				if(!empty($tab['content'])) {
+					foreach ($tab['content'] as $id => $el) {
+						$elSection = isset($el['params']['section']) ? $el['params']['section'] : 'none';
+						if ($elSection == 'none' || isset($sections[$elSection])) {
+							$tabSections[$elSection][$id] = $el;
+						}
+					}
+					$tabs[$tabId]['sections'] = $tabSections;
+				}
+			}
+			
+			// RENDER TABS WITH SECTIONS
+			foreach($tabs as $tabId=>$tab) {
+				$sectionContent = array();
+				if(!empty($tab['sections'])) {
+					foreach ($tab['sections'] as $sectionId => $content) {
+
+						// if(!isset($sectionContent[$sectionId])) $sectionContent[$sectionId] = '';
+						$grid        = isset($sections[$sectionId]['grid']) ? $sections[$sectionId]['grid'] : '1column';
+						$contentArr  = $this->renderContent($content);
+						$sectionGrid = $this->fetchTpl('grid.' . $grid, $contentArr);
+
+						$pos = $sectionId != 'none' && isset($sections[$sectionId]['position']) ? $sections[$sectionId]['position'] : 'none';
+
+						if ($pos == 'none') {
+							$sectionContent['default'] .= $sectionGrid;
+						}
+						else {
+							$sectionContent[$pos] .= $this->fetchTpl('form.section', array('title' => $sections[$sectionId]['label'], 'content' => $sectionGrid));
+						}
+					}
+				}
+				
+				$grid = isset($tabs[$tabId]['grid']) ? $tabs[$tabId]['grid'] : '1column';
+				$tabContent = $this->fetchTpl('grid.'.$grid, $sectionContent);
+				$output .= $this->fetchTpl('tab.tab', array(
+					'id'=>$tabId,
+					'label'=>$tabs[$tabId]['label'],
+					'content'=>$tabContent
+				));
+			}
+			
+			$output = $this->fetchTpl('tab.container', array('content'=>$output));
+			
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		// NO TABS, HANDLE ONLY SECTIONS
+		} else if($sections) {
+
+			// BUILD ARRAY WITH ALL INPUTS PER TAB
+			foreach($inputs as $id=>$el) {
+				$elSection = isset($el['params']['section']) ? $el['params']['section'] : false;
+				if($elSection && isset($sections[$elSection])) {
+					$sections[$elSection]['content'][$id] = $el;
+				} else {
+					$sections['none']['content'][$id] = $el;
+				}
+			}
+
+			// RENDER SECTIONS
+			foreach($sections as $sectionId=>$section) {
+				$sectionContent = array();
+				if(!empty($section['content'])) {
+
+					$contentArr  = $this->renderContent($section['content']);
+
+					$grid        = isset($sections[$sectionId]['grid']) ? $sections[$sectionId]['grid'] : '1column';
+					$sectionContent = $this->fetchTpl('grid.' . $grid, $contentArr);
+
+					if ($sectionId == 'none') {
+						$output .= $sectionContent;
+					}
+					else {
+						$output .= $this->fetchTpl('form.section', array('title' => $sections[$sectionId]['label'], 'content' => $sectionContent));
+					}
+				}
+
+			}
+			
+		// NO TABS, NO SECTIONS, HANDLE ONLY INPUTS
+		} else {
+			$output = join('', $this->renderContent($inputs));
 		}
 
-		if($section) $content .= $this->fetchTpl('grid.'.$form['grid'], $positions);
-		$placeholder['content'] = $content;
+		return $output;
+	}
+	
+	function renderContent($content) {
+		$positions = array();
+		foreach($content as $id=>$el) {
 
-		return $this->fetchTpl('form', $placeholder);
+			$pos = isset($el['params']['position']) ? $el['params']['position'] : 'default';
+
+			$el = array_merge($el, array(
+				'id'=>$id,
+				// 'formId'=>$formId
+			));
+
+			$positions[$pos] .= $this->renderFormField($el);
+			$positions[$pos] .= "\n";
+		}
+		
+		foreach($positions as $pos=>$content) {
+			$positions[$pos] = $this->fetchTpl('form.table', array(
+				'content'=>$content
+			));
+		}
+		
+		return $positions;
+	}
+	
+	function renderFormField($el, $noOuterTpl=false)
+	{
+		$input = 'Type not found:'.print_r($el,true);
+		
+		switch($el['type']) {
+			case 'password':
+				$input = $this->fetchTpl('form.input.password', $el);
+				break;
+			case 'message':
+				$input = $this->fetchTpl('form.message', $el);
+				break;
+			case 'hidden':
+				return '	<input type="hidden" name="'.$el['name'].'" value="'.$el['value'].'" />';
+			case 'submit':
+				$displayNone = ' style="display:none"';
+				return '	<input type="submit" name="'.$el['name'].'"'.$displayNone.'>';
+		}
+		
+		if($noOuterTpl) return $input;
+		
+		return $this->fetchTpl('form.table.row', array(
+			'label'=>$el['label'],
+			'input'=>$input
+		));
 	}
 
 	function fetchTpl($tpl, $placeholders, $noParse=false)
@@ -349,6 +426,62 @@ class ManagerTemplateEngine {
 		}
 		if($noParse) return $template;
 		return $this->parsePlaceholders($template, $placeholders);
+	}
+
+	function parsePlaceholders($source, $placeholder=array())
+	{
+		global $modx, $_lang, $_style;
+
+		$placeholder = array_merge($this->placeholders, $placeholder);
+
+		$source = $modx->mergeSettingsContent($source);
+
+		// Get list of all existing [+placeholders+]
+		$tags = $modx->getTagsFromContent($source);
+
+		if(!empty($tags)) {
+			foreach($tags[1] as $key=>$tag) {
+				if (substr($tag, 0, 5) == 'lang.') {
+					// Replace language
+					$langKey = substr($tag, 5);
+					$value   = isset($_lang[$langKey]) ? $_lang[$langKey] : '';
+				} else if (substr($tag, 0, 6) == 'style.') {
+					// Replace style
+					$styleKey = substr($tag, 6);
+					$value    = isset($_style[$styleKey]) ? $_style[$styleKey] : '';
+				} else if (strpos($tag, '.') !== false) {
+						// Replace multi-placeholders
+						$exp = explode('.', $tag);
+
+						// Form-placeholders
+						if(isset($this->dom['forms'][ $exp[0] ])) {
+							if($exp[1] == 'inputs') {
+								switch($exp[2]) {
+									case 'hidden':
+										$value = '';
+										foreach($this->dom['forms'][ $exp[0] ]['inputs'] as $id=>$el) {
+											if($el['type'] == 'hidden') {
+												$value .= $this->renderFormField($el);
+											}
+										}
+										break;
+								}
+							}else if($exp[1] == 'input') {
+								$value = isset($this->dom['forms'][ $exp[0] ]['inputs'][ $exp[2] ]) ? $this->renderFormField($this->dom['forms'][ $exp[0] ]['inputs'][ $exp[2] ]) : '';
+							} else {
+								$value = isset($this->dom['forms'][ $exp[0] ][ $exp[1] ]) ? $this->dom['forms'][ $exp[0] ][ $exp[1] ] : '';
+							}
+						}
+						
+				} else {
+					// Parse normal placeholders
+					$value = isset($placeholder[$tag]) ? $placeholder[$tag] : '';
+				}
+				$source = str_replace($tags[0][$key], $value, $source);
+			}
+		}
+
+		return $source;
 	}
 
 }

@@ -9,10 +9,16 @@
 <body ondragstart="return false"[+modx_textdir_class+]>
 <div id="preLoader"><table width="100%" border="0" cellpadding="0"><tr><td align="center"><div class="preLoaderText">[+style.ajax_loader+]</div></td></tr></table></div>
 
+<h1>[+title+]</h1>
+
 [[mgrTpl?&get=`buttons` &outerTpl=`actionButtons`&rowTpl=`actionButton`]]
 [[mgrTpl?&get=`alerts`  &outerTpl=`alerts`&rowTpl=`alert`]]
-[[mgrTpl?&get=`body`    &outerTpl=`actionButtons`&rowTpl=`actionButton`]]
-[[mgrTpl?&get=`footer`  &outerTpl=`actionButtons`&rowTpl=`actionButton`]]
+
+<div class="sectionBody">
+    [[mgrTpl?&get=`body`]]
+</div>
+
+[[mgrTpl?&get=`footer`]]
 
 </body>
 </html>
