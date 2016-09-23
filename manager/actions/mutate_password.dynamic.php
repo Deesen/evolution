@@ -32,13 +32,14 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 	->addFormField('userform','pass2',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'general','section'=>'first','position'=>'block1'))
 	
 	// TEST
-		
 	->addSection('userform', 'second', $_lang['change_password'].' 2', '2columns', 'block2')
 	->addFormField('userform','pass3',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'secondary','section'=>'first','position'=>'block1'))
 	->addFormField('userform','pass4',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'secondary','section'=>'first','position'=>'block2'))
 	->addFormField('userform','pass5',	'password',	'', $_lang['change_password_new'],     array('order'=>3, 'tab'=>'secondary','section'=>'second','position'=>'block1'))
 	->addFormField('userform','pass6',	'password',	'', $_lang['change_password_confirm'], array('order'=>4, 'tab'=>'secondary','section'=>'second','position'=>'block2'))
 
+	->addFormField('userform','pass7',	'password',	'', $_lang['change_password_new'],     array('order'=>3, 'tab'=>'secondary', 'position'=>'block1'))
+	->addFormField('userform','pass8',	'password',	'', $_lang['change_password_confirm'], array('order'=>4, 'tab'=>'secondary', 'position'=>'block2'))
 ;
 
 echo $tpe->renderFullDom();

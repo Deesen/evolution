@@ -290,11 +290,12 @@ class ManagerTemplateEngine {
 					foreach ($tab['sections'] as $sectionId => $content) {
 
 						// if(!isset($sectionContent[$sectionId])) $sectionContent[$sectionId] = '';
-						$grid        = isset($sections[$sectionId]['grid']) ? $sections[$sectionId]['grid'] : '1column';
+						$grid        = isset($sections[$sectionId]['grid']) ? $sections[$sectionId]['grid'] : NULL;
+						$grid        = is_null($grid) ? $tab['grid'] : $grid;
 						$contentArr  = $this->renderContent($content);
 						$sectionGrid = $this->fetchTpl('grid.' . $grid, $contentArr);
 
-						$pos = $sectionId != 'none' && isset($sections[$sectionId]['position']) ? $sections[$sectionId]['position'] : 'none';
+						$pos = isset($sections[$sectionId]['position']) ? $sections[$sectionId]['position'] : 'none';
 
 						if ($pos == 'none') {
 							$sectionContent['default'] .= $sectionGrid;
