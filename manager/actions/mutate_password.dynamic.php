@@ -8,75 +8,83 @@ global $_style, $_lang;
 
 $tpe =& $modx->manager->tpl;
 
+
+///////////////////////////////////////////////
+// Required settings for Template-engine
 $tpe->setActionTemplate('mutate_password.dynamic')
-	->setTitle($_lang['change_password'])
-	
-	// ->alert('test')
-	// ->alert('test222', 'error')
 
-	->setActionButtons(array(
-		'Button1'=>array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.userform.save.click();', 'class'=>'transition'),
-		'Button5'=>array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>"documentDirty=false; document.location.href='index.php?a=2'", 'class'=>'transition'),
-	))
+///////////////////////////////////////////////
+// Custom placeholders
+->setPlaceholder('title', $_lang['change_password'])
 
-	->addForm('userform', 'userform', 'index.php?a=34', 'post')
-	
-	->addTab('userform', 'general', 'general label', '1column')
-	->addTab('userform', 'secondary', 'secondary label', '2columns')
+///////////////////////////////////////////////
+// Set alerts
+->alert('This is an example alert / error-msg.', 'error')
 
-	->addFormField('userform','id',		'hidden',	$_GET['id'])
-	->addFormField('userform','save',	'submit')
-	
-	->addSection('userform', 'first', $_lang['change_password'],       '2columns', 'block1')
-	->addFormField('userform','pass1',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'general','section'=>'first','position'=>'block1'))
-	->addFormField('userform','pass2',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'general','section'=>'first','position'=>'block1'))
-	
-	// TEST
-	->addSection('userform', 'second', $_lang['change_password'].' 2', '2columns', 'block2')
-	->addFormField('userform','pass3',	'password',	'', $_lang['change_password_new'],     array('order'=>1, 'tab'=>'secondary','section'=>'first','position'=>'block1'))
-	->addFormField('userform','pass4',	'password',	'', $_lang['change_password_confirm'], array('order'=>2, 'tab'=>'secondary','section'=>'first','position'=>'block2'))
-	->addFormField('userform','pass5',	'password',	'', $_lang['change_password_new'],     array('order'=>3, 'tab'=>'secondary','section'=>'second','position'=>'block1'))
-	->addFormField('userform','pass6',	'password',	'', $_lang['change_password_confirm'], array('order'=>4, 'tab'=>'secondary','section'=>'second','position'=>'block2'))
+///////////////////////////////////////////////
+// Set Action Buttons in category main 
+->setButton('main', 'Button1', array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.userform.save.click();', 'class'=>'transition'))
+->setButton('main', 'Button5', array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>"documentDirty=false; document.location.href='index.php?a=2';"))
+// Modify Action Buttons (also possible via custom-templates)
+->addButtonParam('main', 'Button5', 'onclick', "alert('true')")	// Add
+->setButtonParam('main', 'Button5', 'class', 'transition')	// Set
 
-	->addFormField('userform','pass7',	'password',	'', $_lang['change_password_new'],     array('order'=>3, 'tab'=>'secondary', 'position'=>'block1'))
-	->addFormField('userform','pass8',	'password',	'', $_lang['change_password_confirm'], array('order'=>4, 'tab'=>'secondary', 'position'=>'block2'))
-;
+///////////////////////////////////////////////
+// Configure body, can be modified via templates
+
+/////////////////////////////////////////////////////////////////////////////
+////////////// EXAMPLE WITH TABS
+->createBodyElement('form', 'userform', array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
+	
+->addElement('message', 'msg1',     'userform',   							array('message'=>'Just same example text'))	
+	
+->addElement('input', 	'id',    	'userform', 		  					array('name'=>'id', 'type'=>'hidden', 'value'=>$_GET['id']))
+
+->addElement('tabpane',	'pane1', 	'userform', 	 	  					array('label'=>$_lang['change_password']))
+->addElement('tab', 	'tab1', 	'userform.pane1', 	 	  				array('label'=>$_lang['change_password']))
+->addElement('section', 'section1', 'userform.pane1.tab1',					array('label'=>$_lang['change_password']))
+->addElement('input', 	'pass1', 	'userform.pane1.tab1.section1', 		array('name'=>'pass1', 'type'=>'password', 'label'=>$_lang['change_password_new']))
+->addElement('input', 	'pass2', 	'userform.pane1.tab1.section1', 		array('name'=>'pass2', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
+
+->addElement('tab', 	'tab2', 	'userform.pane1', 	 	  				array('label'=>$_lang['change_password'].' 2'))
+->addElement('grid',    'grid2_1',  'userform.pane1.tab2', 	  				array()									   	, array('tpl'=>'grid.2columns'))
+->addElement('section', 'section2', 'userform.pane1.tab2.grid2_1',			array('label'=>$_lang['change_password']  )	, array('pos'=>'block1'))
+->addElement('input', 	'pass3', 	'userform.pane1.tab2.grid2_1.section2',	array('name'=>'pass3', 'type'=>'password', 'label'=>$_lang['change_password_new']))
+->addElement('input', 	'pass4', 	'userform.pane1.tab2.grid2_1.section2',	array('name'=>'pass4', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
+->addElement('section', 'section3', 'userform.pane1.tab2.grid2_1', 	  		array('label'=>$_lang['change_password'].' 2'  )	, array('pos'=>'block2'))
+->addElement('input', 	'pass5', 	'userform.pane1.tab2.grid2_1.section3', array('name'=>'pass5', 'type'=>'password', 'label'=>$_lang['change_password_new']))
+->addElement('input', 	'pass6', 	'userform.pane1.tab2.grid2_1.section3', array('name'=>'pass6', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
+
+->addElement('input', 	'save', 	'userform', 							array('name'=>'save', 'type'=>'submit'))
+
+// And some example text
+->addElement('message', 'msg2',      'userform',   			array('message'=>'And again just same example text'))
+
+///////////////////////////////////////////////////////////////////////////// 
+////////////// ORIGINAL FORM 
+/*                                             
+	->setActionTemplate('mutate_password.dynamic')
+	->setPlaceholder('title', $_lang['change_password'])
+
+	->createBodyElement('form', 'userform', array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
+
+	->addElement('input', 	'id',    	'userform', 		  	array('name'=>'id', 'type'=>'hidden', 'value'=>$_GET['id']))
+	->addElement('section', 'section1', 'userform',				array('label'=>$_lang['change_password']))
+	->addElement('message', 'msg1',     'userform.section1',	array('message'=>$_lang['change_password_message']))
+	->addElement('input', 	'pass1', 	'userform.section1', 	array('name'=>'pass1', 'type'=>'password', 'label'=>$_lang['change_password_new']))
+	->addElement('input', 	'pass2', 	'userform.section1', 	array('name'=>'pass2', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
+	->addElement('input', 	'save', 	'userform', 			array('name'=>'save', 'type'=>'submit'))
+*/
+
+/*
+// Custom template or ManagerManager can modify matrix like this
+// First add message and new section
+$tpe->addElement('section', 'section2', 'userform',					array('label'=>'Example'))
+// Now move element to new section
+	->moveElement('userform.section1.pass2', 'userform.section2')
+*/
+ 
+;             
 
 echo $tpe->renderFullDom();
 ?>
-
-<!--
-<hr/>
-
-<h1><?php echo $_lang['change_password']?></h1>
-<div id="actions">
-	<ul class="actionButtons">
-		<li class="transition"><a href="javascript:void(0)" onclick="documentDirty=false; document.userform.save.click();"><img src="<?php echo $_style["icons_save"]?>" /> <?php echo $_lang['save']?></a></li>
-		<li id="Button5" class="transition"><a href="#" onclick="documentDirty=false;document.location.href='index.php?a=2';"><img src="<?php echo $_style["icons_cancel"] ?>" /> <?php echo $_lang['cancel']?></a></li>
-	</ul>
-</div>
-<div class="section">
-<div class="sectionHeader"><?php echo $_lang['change_password']?></div>
-<div class="sectionBody">
-	<form action="index.php?a=34" method="post" name="userform">
-	<input type="hidden" name="id" value="<?php echo $_GET['id']?>" />
-
-	<p><?php echo $_lang['change_password_message']?></p>
-
-	<table border="0" cellspacing="0" cellpadding="4">
-	<tr>
-		<td><?php echo $_lang['change_password_new']?>:</td>
-		<td>&nbsp;</td>
-		<td><input type="password" name="pass1" class="inputBox" style="width:150px" value=""></td>
-	</tr><tr>
-		<td><?php echo $_lang['change_password_confirm']?>:</td>
-		<td>&nbsp;</td>
-		<td><input type="password" name="pass2" class="inputBox" style="width:150px" value=""></td>
-	</tr>
-	</table>
-
-	<input type="submit" name="save" style="display:none">
-</form>
-</div>
-</div>
--->

@@ -2,14 +2,27 @@
 /* Default Manager TemplateEngine Setup */
 
 // Default CSS
-$this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css');
+$this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 
-// Default Javascript
-$this->registerScriptSrc('jquery', '[(mgr_jquery_path)]', '3.1.0');
-$this->registerScriptSrc('mootools', 'media/script/mootools/mootools.js', '1.12');
-$this->registerScriptSrc('moodx', 'media/script/mootools/moodx.js');
-$this->registerScriptSrc('tabs', 'media/script/tabpane.js');
+// Default Javascript-Files
+->registerScriptSrc('jquery', 		'[(mgr_jquery_path)]', '3.1.0')
+->registerScriptSrc('mootools',		'media/script/mootools/mootools.js', '1.12')
+->registerScriptSrc('moodx', 		'media/script/mootools/moodx.js')
+->registerScriptSrc('tabs', 		'media/script/tabpane.js')
 
-$this->registerScriptFromFile('modx_jq', 'media/script/manager.js');
+// Default injected Javascript - allows use of MODX-placeholders
+->registerScriptFromFile('modx_jq','media/script/manager.js')
+
+->setTypeDefaults('form', 			array('tpl'=>'form'))
+->setTypeDefaults('input.hidden', 	array('tpl'=>'form.input.hidden'))
+->setTypeDefaults('input.password', array('tpl'=>'form.input.password', 'outerTpl'=>'form.table.row'))
+->setTypeDefaults('input.submit', 	array('tpl'=>'form.input.submit'))
+->setTypeDefaults('message', 		array('tpl'=>'message'))
+->setTypeDefaults('section', 		array('tpl'=>'form.section', 'innerTpl'=>'form.table'))
+->setTypeDefaults('tabpane', 		array('tpl'=>'tab.container'))
+->setTypeDefaults('tab',	 		array('tpl'=>'tab.tab'))
+->setTypeDefaults('grid',	 		array('tpl'=>'grid.1column'))
+
+;  
 
 if(isset($_REQUEST['r'])) $this->setPlaceholder('doRefresh', 'doRefresh("'. $_REQUEST['r'] .'");');

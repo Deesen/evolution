@@ -3,23 +3,23 @@ if(IN_MANAGER_MODE!="true") die("<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please
 
 class ManagerTemplateEngine {
 
+	var $debug = false;
+	var $debugMsg = array();
 	var $dom = array();
 	var $placeholders = array();
 	var $actionTpl = ''; 
-	var $templates = array();
+	var $tplCache = array();
+	var $typeDefaults = array();
 
 	function __construct()
 	{
 		global $modx, $modx_manager_charset;
 
 		// Prepare DOM-array
-		$this->dom['buttons'] = array();
-		$this->dom['forms'] = array();
-		$this->dom['header'] = array();
-		// $this->dom['body'] = array();
-		// $this->dom['body']['content'] = array();
-		$this->dom['footer'] = array();
-		$this->dom['title'] = 'No title';
+		$this->dom['header'] = array();		// Everything related to <head>
+		$this->dom['buttons'] = array();	// All action-buttons in categories with "main" as top-bar 
+		$this->dom['elements'] = array();	// All elements to be rendered in DOM
+		$this->dom['footer'] = array();		// Everything related to new Footer-Bar
 
 		// Prepare Header-Attributes
 		$modx->config['modx_lang_attribute'] = isset($modx->config['modx_lang_attribute']) ? $modx->config['modx_lang_attribute'] : 'en';
@@ -42,43 +42,184 @@ class ManagerTemplateEngine {
 		$this->dom['header']['OnManagerMainFrameHeaderHTMLBlock'] = is_array($evtOut) ? implode("\n", $evtOut) : '';
 	}
 
+	function createBodyElement($elType, $elId, $attr=array(), $tpe=array())
+	{
+		$tpe = array_merge($this->getTypeDefaults($elType, $attr), array(
+			'order'=>count($this->dom['elements'])
+		), $tpe);
+		
+		$this->dom['elements'][$elId] = array(
+			'type'=>$elType,
+			'id'=>$elId,
+			'attr'=>$attr,
+			'tpe'=>$tpe,
+			'childs'=>array()
+		);
+		return $this;
+	}
+
+	function addElement($elType, $elId, $target, $attr=array(), $tpe=array())
+	{
+		// Target example: "userform.tab2.section2"
+		// @todo: replace by $this->getDomIndex()
+		$domTarget = explode( '.', $target );
+		$dom =& $this->dom['elements'];
+		foreach( $domTarget as $key ) {
+			if(isset($dom[$key])) {
+				$dom =& $dom[$key]['childs'];
+			} else {
+				$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $target);
+				return $this;
+			}
+		}
+		
+		$tpe = array_merge($this->getTypeDefaults($elType, $attr), array(
+			'order'=>count($dom)
+		), $tpe);
+		
+		$dom[$elId] = array(
+			'type'=>$elType,
+			'id'=>$elId,
+			'target'=>$target,
+			'attr'=>$attr,
+			'tpe'=>$tpe,
+			'childs'=>array()
+		);
+		
+		return $this;
+	}
+	
+	// Example: 'userform.section1.pass2' to 'userform.section2'
+	function moveElement($sourceEl, $targetEl)
+	{
+		// @todo: replace by $this->getDomIndex() ?
+		$domSource = explode('.', $sourceEl); 
+		$sourceElId = array_pop($domSource);
+		
+		$dom       =& $this->dom['elements'];
+		foreach ($domSource as $key) {
+			if (isset($dom[$key])) {
+				$dom =& $dom[$key]['childs'];
+			}
+			else {
+				$this->debugMsg[] = sprintf('moveElement(): Key "%s" not found of source "%s"', $key, $sourceEl);
+				return $this;
+			}
+		}
+
+		$src = $dom[$sourceElId];
+		unset($dom[$sourceElId]);
+		
+		$this->addElement($src['type'], $src['id'], $targetEl, $src['attr'], $src['tpe']);
+		
+		return $this;
+	}
+
+	//////////////////////////////////
+	// @todo: Doesn´t work! How to do?
+	/*
+	function getDomIndex($target, &$dom)
+	{
+		$domTarget = explode( '.', $target );
+		foreach( $domTarget as $key ) {
+			if(isset($dom[$key])) {
+				$dom =& $dom[$key]['childs'];
+			} else {
+				$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $target);
+				return NULL;
+			}
+		}
+		return $dom;
+	}
+	*/
+
+	function renderFullDom()
+	{
+		if($this->debug) {
+			echo '<h2>dom</h2><pre style="font-size:12px;">'.print_r($this->dom,true).'</pre>';
+			echo '<h2>typeDefaults</h2><pre style="font-size:12px;">'.print_r($this->typeDefaults,true).'</pre>';
+			echo '<h2>debugMsg</h2><pre style="font-size:12px;">'.print_r($this->debugMsg,true).'</pre>';
+			exit;
+		}
+		
+		global $modx;
+
+		// Prepare placeholders
+		$placeholders = array(
+			
+		);
+
+		// @todo: load custom-action to allow customizing dom-array
+
+		$source = $this->fetchTpl('body', $placeholders);
+		return $modx->parseManagerDocumentSource($source);
+	}
+
+	function mergeElement($element)
+	{
+		if($element =='body') $dom =& $this->dom['elements'];
+		else {
+			// @todo: replace by $this->getDomIndex()
+			$domTarget = explode( '.', $element );
+			$dom =& $this->dom['elements'];
+			foreach( $domTarget as $key ) {
+				if(isset($dom[$key])) {
+					$dom =& $dom[$key]['childs'];
+				} else {
+					$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $element);
+					return NULL;
+				}
+			}
+		}
+		
+		$body = $this->renderRecursive($dom);
+		return $body['childs'];
+	}
+
+	function renderRecursive($dom)
+	{
+		$output = array();
+		
+		foreach($dom as $elId=>$el) {
+			
+			$elementTpl = $el['tpe']['tpl'];
+			$phs = array_merge($el['attr'], $el['tpe']);
+			$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
+			
+			if(!empty($el['childs'])) {
+				$recursive = array_merge($phs, $this->renderRecursive($el['childs']));
+				if(isset($el['tpe']['innerTpl'])) {
+					$phs['childs'] = $this->fetchTpl($el['tpe']['innerTpl'], $recursive);
+				} else {
+					$phs = $recursive;
+				}
+			}
+			
+			$fetch = $this->fetchTpl($elementTpl, $phs);
+			if(isset($el['tpe']['outerTpl'])) {
+				$output[$pos] .= $this->fetchTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs'=>$fetch)));
+			} else {
+				$output[$pos] .= $fetch;
+			}
+		}
+		
+		return $output;
+	}
+	
+	function getTypeDefaults($elType, $attr)
+	{
+		$key = $elType;
+		if(isset($attr['type']) && !empty($attr['type'])) $key = $elType.'.'.$attr['type'];
+		return $this->typeDefaults[$key];
+	}
+
+	function setTypeDefaults($type, $defaults) {
+		$this->typeDefaults[$type] = $defaults;
+		return $this;
+	}
+	
 	function setActionTemplate($tpl) {
 		$this->actionTpl = $tpl;
-		return $this;
-	}
-
-	function setTitle($title) {
-		$this->dom['title'] = $title;
-		return $this;
-	}
-
-	function addForm($id, $name, $action, $method) {
-		$this->dom['forms'][$id] = array(
-			'name'=>$name,
-			'id'=>$id,
-			'action'=>$action,
-			'method'=>$method
-		);
-		return $this;
-	}
-
-	function addSection($formid, $section, $label, $grid='1column', $position='default') {
-		$this->dom['forms'][$formid]['sections'][$section] = array(
-			'label'=>$label,
-			'grid'=>$grid,
-			'position'=>$position
-		);
-		return $this;
-	}
-
-	function addFormField($formid, $name, $type, $value=NULL, $label='', $params=array()) {
-		$this->dom['forms'][$formid]['inputs'][$name] = array(
-			'name'=>$name,
-			'type'=>$type,
-			'value'=>$value,
-			'label'=>$label,
-			'params'=>$params,
-		);
 		return $this;
 	}
 	
@@ -87,16 +228,18 @@ class ManagerTemplateEngine {
 		return $this;
 	}
 
-	function addTab($formId, $tabId, $label, $grid) {
-		$this->dom['forms'][$formId]['tabs'][$tabId] = array(
-			'label'=>$label,
-			'grid'=>$grid
-		);
+	function setButton($category, $id, $params) {
+		$this->dom['buttons'][$category][$id] = $params;
 		return $this;
 	}
 
-	function setActionButtons($arr) {
-		$this->dom['buttons'] = array_merge($this->dom['buttons'], $arr);
+	function addButtonParam($category, $id, $param, $value) {
+		$this->dom['buttons'][$category][$id][$param] .= $value;
+		return $this;
+	}
+
+	function setButtonParam($category, $id, $param, $value) {
+		$this->dom['buttons'][$category][$id][$param] = $value;
 		return $this;
 	}
 
@@ -127,44 +270,13 @@ class ManagerTemplateEngine {
 		return $this;
 	}
 
-	function addBody($content) {
-		$this->dom['body']['content'] = $this->dom['body']['content'] + $content;
-		return $this;
-	}
-
 	function setPlaceholder($key, $value) {
 		$this->placeholders[$key] = $value;
 		return $this;
 	}
-
-	function renderFullDom()
-	{
-		global $modx;
-
-		// Prepare placeholders
-		$placeholders = array(
-			'title'=>$this->dom['title']
-		);
-
-		// load custom-action to allow customizing dom-array
-
-		$source = $this->fetchTpl('body', $placeholders);
-		return $modx->parseManagerDocumentSource($source);
-	}
 	
-	function renderActionTemplate()
-	{
-		global $modx;
-		
-		// Prepare placeholders
-		$placeholders = array(
-			'title'=>$this->dom['title']
-		);
-		
-		// load custom-action to allow customizing dom-array
-		
-		$source = $this->fetchTpl('body', $placeholders);
-		return $modx->parseManagerDocumentSource($source);
+	function getPlaceholder($key, $fallback=NULL) {
+		return $this->placeholders[$key] === '' & !is_null($fallback) ? $fallback : $this->placeholders[$key];
 	}
 
 	function mergeDomCss()
@@ -189,14 +301,15 @@ class ManagerTemplateEngine {
 		return $output;
 	}
 
-	function mergeDomActionButtons($outerTpl, $rowTpl)
+	function mergeDomActionButtons($category, $outerTpl, $rowTpl)
 	{
+		$category = !empty($category) ? $category : 'main';
 		$outerTpl = !empty($outerTpl) ? $outerTpl : 'actionButtons';
 		$rowTpl = !empty($rowTpl) ? $rowTpl : 'actionButton';
 
 		$output = '';
-		if(!empty($this->dom['buttons'])) {
-			foreach($this->dom['buttons'] as $id=>$placeholders) {
+		if(!empty($this->dom['buttons'][$category])) {
+			foreach($this->dom['buttons'][$category] as $id=>$placeholders) {
 				$output .= $this->fetchTpl($rowTpl, $placeholders);
 			};
 		};
@@ -225,202 +338,23 @@ class ManagerTemplateEngine {
 
 	function mergeDomBody()
 	{
-		/*
-		$positions = array();
-		foreach($this->dom['body']['content'] as $id=>$el) {
-			$pos = isset($el['position']) ? $el['position'] : 'default';
-			$type = isset($el['type']) ? $el['type'] : 'html'; 
-			switch($type) {
-				case 'form':
-					$positions[$pos] .= $this->renderForm($id, $el);
-					break;
-				case 'message':
-					$positions[$pos] .= $this->fetchTpl('body.message', $el);
-					break;
-				case 'html':
-					// $blocks = $el['html']."\n";
-					break;
-			}
-		};
-		*/
-		
 		return $this->fetchTpl('actions/'.$this->actionTpl, array());
 	}
 	
-	function mergeFormInputs($formId, $outerTpl, $rowTpl, $useTabs=true, $useSections=true, $filter='', $sortBy='order')
-	{
-		if($useTabs && empty($this->dom['forms'][$formId]['tabs'])) $useTabs = false;
-		if($useSections && empty($this->dom['forms'][$formId]['sections'])) $useTabs = false;
-
-		$form = $this->dom['forms'][$formId];
-		$inputs = $this->dom['forms'][$formId]['inputs'];
-		$tabs = $useTabs ? $this->dom['forms'][$formId]['tabs'] : false;
-		$sections = $useSections ? $this->dom['forms'][$formId]['sections'] : false;
-
-		$output = '';
-		
-		// HANDLE TABS
-		if($tabs) {
-			// BUILD ARRAY WITH ALL INPUTS PER TAB
-			foreach($inputs as $id=>$el) {
-				$elTab = isset($el['params']['tab']) ? $el['params']['tab'] : false;
-				if($elTab && isset($tabs[$elTab])) {
-					$tabs[$elTab]['content'][$id] = $el; 
-				}
-			}
-			
-			// BUILD ARRAY WITH ALL INPUTS PER SECTION
-			foreach($tabs as $tabId=>$tab) {
-				$tabSections = array();
-				if(!empty($tab['content'])) {
-					foreach ($tab['content'] as $id => $el) {
-						$elSection = isset($el['params']['section']) ? $el['params']['section'] : 'none';
-						if ($elSection == 'none' || isset($sections[$elSection])) {
-							$tabSections[$elSection][$id] = $el;
-						}
-					}
-					$tabs[$tabId]['sections'] = $tabSections;
-				}
-			}
-			
-			// RENDER TABS WITH SECTIONS
-			foreach($tabs as $tabId=>$tab) {
-				$sectionContent = array();
-				if(!empty($tab['sections'])) {
-					foreach ($tab['sections'] as $sectionId => $content) {
-
-						// if(!isset($sectionContent[$sectionId])) $sectionContent[$sectionId] = '';
-						$grid        = isset($sections[$sectionId]['grid']) ? $sections[$sectionId]['grid'] : NULL;
-						$grid        = is_null($grid) ? $tab['grid'] : $grid;
-						$contentArr  = $this->renderContent($content);
-						$sectionGrid = $this->fetchTpl('grid.' . $grid, $contentArr);
-
-						$pos = isset($sections[$sectionId]['position']) ? $sections[$sectionId]['position'] : 'none';
-
-						if ($pos == 'none') {
-							$sectionContent['default'] .= $sectionGrid;
-						}
-						else {
-							$sectionContent[$pos] .= $this->fetchTpl('form.section', array('title' => $sections[$sectionId]['label'], 'content' => $sectionGrid));
-						}
-					}
-				}
-				
-				$grid = isset($tabs[$tabId]['grid']) ? $tabs[$tabId]['grid'] : '1column';
-				$tabContent = $this->fetchTpl('grid.'.$grid, $sectionContent);
-				$output .= $this->fetchTpl('tab.tab', array(
-					'id'=>$tabId,
-					'label'=>$tabs[$tabId]['label'],
-					'content'=>$tabContent
-				));
-			}
-			
-			$output = $this->fetchTpl('tab.container', array('content'=>$output));
-			
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		// NO TABS, HANDLE ONLY SECTIONS
-		} else if($sections) {
-
-			// BUILD ARRAY WITH ALL INPUTS PER TAB
-			foreach($inputs as $id=>$el) {
-				$elSection = isset($el['params']['section']) ? $el['params']['section'] : false;
-				if($elSection && isset($sections[$elSection])) {
-					$sections[$elSection]['content'][$id] = $el;
-				} else {
-					$sections['none']['content'][$id] = $el;
-				}
-			}
-
-			// RENDER SECTIONS
-			foreach($sections as $sectionId=>$section) {
-				$sectionContent = array();
-				if(!empty($section['content'])) {
-
-					$contentArr  = $this->renderContent($section['content']);
-
-					$grid        = isset($sections[$sectionId]['grid']) ? $sections[$sectionId]['grid'] : '1column';
-					$sectionContent = $this->fetchTpl('grid.' . $grid, $contentArr);
-
-					if ($sectionId == 'none') {
-						$output .= $sectionContent;
-					}
-					else {
-						$output .= $this->fetchTpl('form.section', array('title' => $sections[$sectionId]['label'], 'content' => $sectionContent));
-					}
-				}
-
-			}
-			
-		// NO TABS, NO SECTIONS, HANDLE ONLY INPUTS
-		} else {
-			$output = join('', $this->renderContent($inputs));
-		}
-
-		return $output;
-	}
-	
-	function renderContent($content) {
-		$positions = array();
-		foreach($content as $id=>$el) {
-
-			$pos = isset($el['params']['position']) ? $el['params']['position'] : 'default';
-
-			$el = array_merge($el, array(
-				'id'=>$id,
-				// 'formId'=>$formId
-			));
-
-			$positions[$pos] .= $this->renderFormField($el);
-			$positions[$pos] .= "\n";
-		}
-		
-		foreach($positions as $pos=>$content) {
-			$positions[$pos] = $this->fetchTpl('form.table', array(
-				'content'=>$content
-			));
-		}
-		
-		return $positions;
-	}
-	
-	function renderFormField($el, $noOuterTpl=false)
-	{
-		$input = 'Type not found:'.print_r($el,true);
-		
-		switch($el['type']) {
-			case 'password':
-				$input = $this->fetchTpl('form.input.password', $el);
-				break;
-			case 'message':
-				$input = $this->fetchTpl('form.message', $el);
-				break;
-			case 'hidden':
-				return '	<input type="hidden" name="'.$el['name'].'" value="'.$el['value'].'" />';
-			case 'submit':
-				$displayNone = ' style="display:none"';
-				return '	<input type="submit" name="'.$el['name'].'"'.$displayNone.'>';
-		}
-		
-		if($noOuterTpl) return $input;
-		
-		return $this->fetchTpl('form.table.row', array(
-			'label'=>$el['label'],
-			'input'=>$input
-		));
-	}
-
 	function fetchTpl($tpl, $placeholders, $noParse=false)
 	{
-		global $manager_theme;
+		global $modx, $manager_theme;
 		
-		if(isset($this->templates[$tpl])) {
-			$template = $this->templates[$tpl];
+		if(isset($this->tplCache[$tpl])) {
+			$template = $this->tplCache[$tpl]['html'];
 		} else {
 			$tplFile = MODX_MANAGER_PATH . 'media/style/' . $manager_theme . '/tpl/' . $tpl . '.html';
 			if (!file_exists($tplFile)) $tplFile = MODX_MANAGER_PATH . 'media/style/common/tpl/' . $tpl . '.html';
 			if (file_exists($tplFile)) {
-				$template              = file_get_contents($tplFile);
-				$this->templates[$tpl] = $template;
+				$template             = file_get_contents($tplFile);
+				$tags = $modx->getTagsFromContent($template);
+				$this->tplCache[$tpl]['html'] = $template;
+				$this->tplCache[$tpl]['tags'] = $tags[1];
 			} else {
 				return 'Template not found: '.$tpl;
 			}
