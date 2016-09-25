@@ -37,6 +37,9 @@ class ManagerTemplateEngine {
 
 		// Load template-engine defaults
 		require MODX_MANAGER_PATH.'media/style/common/engine.php';
+		
+		$customSetupFile = MODX_MANAGER_PATH.'media/style/'.$modx->config['manager_theme'].'/engine.php';
+		if(is_readable($customSetupFile)) require $customSetupFile;
 
 		$evtOut = $modx->invokeEvent('OnManagerMainFrameHeaderHTMLBlock');
 		$this->dom['header']['OnManagerMainFrameHeaderHTMLBlock'] = is_array($evtOut) ? implode("\n", $evtOut) : '';
@@ -155,6 +158,42 @@ class ManagerTemplateEngine {
 		return $modx->parseManagerDocumentSource($source);
 	}
 
+	function mergeElementsList($element, $depth, $outerTpl, $rowTpl, $cssFirst='', $cssLast='')
+	{
+		$output = '';
+		
+		// @todo: replace by $this->getDomIndex()
+		$domTarget = explode( '.', $element );
+		$dom =& $this->dom['elements'];
+		foreach( $domTarget as $key ) {
+			if(isset($dom[$key])) {
+				$dom =& $dom[$key]['childs'];
+			} else {
+				$this->debugMsg[] = sprintf('mergeElementsList() : Key "%s" not found for target "%s"', $key, $element);
+				return NULL;
+			}
+		}
+		
+		// @todo: Use "depth"-param
+		$iteration = 1;
+		$total = count($dom);
+		foreach($dom as $elId=>$el) {
+			$additional = array();
+			if($iteration == 1) $additional = array('cssFirst'=>$cssFirst, 'cssLast'=>'');
+			if($iteration == $total) $additional = array('cssFirst'=>'','cssLast'=>$cssLast);
+			$phs = $this->prepareElementPlaceholders($el, $additional);
+			$output .= $this->fetchTpl($rowTpl, $phs);
+			$iteration++;
+		}
+		
+		return $this->fetchTpl($outerTpl, array('childs'=>$output));
+	}
+	
+	function prepareElementPlaceholders($el, $additional=array())
+	{
+		return array_merge($el['attr'], $el['tpe'], array('id'=>$el['id'],'target'=>$el['target']), $additional);
+	}
+
 	function mergeElement($element)
 	{
 		if($element =='body') $dom =& $this->dom['elements'];
@@ -180,10 +219,13 @@ class ManagerTemplateEngine {
 	{
 		$output = array();
 		
+		$iteration = 1;
+		$total = count($dom);
 		foreach($dom as $elId=>$el) {
-			
-			$elementTpl = $el['tpe']['tpl'];
-			$phs = array_merge($el['attr'], $el['tpe']);
+			$additional = array();
+			if($iteration == 1) $additional = array('cssFirst'=>isset($el['tpe']['cssFirst']) ? $el['tpe']['cssFirst'] : '','cssLast'=>'');
+			if($iteration == $total) $additional = array('cssFirst'=>'','cssLast'=>isset($el['tpe']['cssLast']) ? $el['tpe']['cssLast'] : '');
+			$phs = $this->prepareElementPlaceholders($el, $additional);
 			$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
 			
 			if(!empty($el['childs'])) {
@@ -195,12 +237,14 @@ class ManagerTemplateEngine {
 				}
 			}
 			
+			$elementTpl = $el['tpe']['tpl'];
 			$fetch = $this->fetchTpl($elementTpl, $phs);
 			if(isset($el['tpe']['outerTpl'])) {
-				$output[$pos] .= $this->fetchTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs'=>$fetch)));
+				$output[$pos] .= $this->fetchTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs'=>$fetch))) . "\n";
 			} else {
-				$output[$pos] .= $fetch;
+				$output[$pos] .= $fetch . "\n";
 			}
+			$iteration++;
 		}
 		
 		return $output;

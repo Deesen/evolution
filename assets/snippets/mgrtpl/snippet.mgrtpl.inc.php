@@ -8,6 +8,9 @@ $filter = isset($filter) ? $filter : '';
 $sortBy = isset($sortBy) ? $sortBy : '';
 $category = isset($category) ? $category : '';
 $element = isset($element) ? $element : '';
+$depth = isset($depth) ? (int)$depth : 0;
+$cssFirst = isset($cssFirst) ? $cssFirst : '';
+$cssLast = isset($cssLast) ? $cssLast : '';
 
 $tpe =& $modx->manager->tpl;
 
@@ -29,6 +32,9 @@ switch($get) {
 		break;
 	case 'element':
 		return $tpe->mergeElement($element);
+		break;
+	case 'list':
+		return $tpe->mergeElementsList($element, $depth, $outerTpl, $rowTpl, $cssFirst, $cssLast);
 		break;
 	case 'inputs':
 		return $tpe->mergeFormInputs($form, $outerTpl, $rowTpl, $useTabs, $useSections, $filter, $sortBy);

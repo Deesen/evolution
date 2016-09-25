@@ -1,0 +1,15 @@
+    <!-- Nav tabs [+target+].[+id+] -->
+    [[mgrTpl?
+        &get=`list`
+        &element=`[+target+].[+id+]`
+        &depth=`1`
+        &outerTpl=`tab.nav.list`
+        &rowTpl=`tab.nav.tab`
+        &cssFirst=`active`
+    ]]
+    
+    <!-- Tab panes -->
+    <div class="tab-content">
+        [+childs+]
+    </div>
+    <br/>

@@ -19,7 +19,7 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 
 ///////////////////////////////////////////////
 // Set alerts
-->alert('This is an example alert / error-msg.', 'error')
+->alert('This is an example alert / error-msg.', 'warning')
 
 ///////////////////////////////////////////////
 // Set Action Buttons in category main 
@@ -36,7 +36,7 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 ////////////// EXAMPLE WITH TABS
 ->createBodyElement('form', 'userform', array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
 	
-->addElement('message', 'msg1',     'userform',   							array('message'=>'Just same example text'))	
+->addElement('message', 'msg1',     'userform',   							array('message'=>'Just some example text'))	
 	
 ->addElement('input', 	'id',    	'userform', 		  					array('name'=>'id', 'type'=>'hidden', 'value'=>$_GET['id']))
 
@@ -58,7 +58,7 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 ->addElement('input', 	'save', 	'userform', 							array('name'=>'save', 'type'=>'submit'))
 
 // And some example text
-->addElement('message', 'msg2',      'userform',   			array('message'=>'And again just same example text'))
+->addElement('message', 'msg2',      'userform',   			array('message'=>'And again just some example text'))
 
 ///////////////////////////////////////////////////////////////////////////// 
 ////////////// ORIGINAL FORM 

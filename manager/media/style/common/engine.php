@@ -20,7 +20,7 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 ->setTypeDefaults('message', 		array('tpl'=>'message'))
 ->setTypeDefaults('section', 		array('tpl'=>'form.section', 'innerTpl'=>'form.table'))
 ->setTypeDefaults('tabpane', 		array('tpl'=>'tab.container'))
-->setTypeDefaults('tab',	 		array('tpl'=>'tab.tab'))
+->setTypeDefaults('tab',	 		array('tpl'=>'tab.tab', 'cssFirst'=>'in active'))
 ->setTypeDefaults('grid',	 		array('tpl'=>'grid.1column'))
 
 ;  
