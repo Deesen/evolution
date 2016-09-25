@@ -118,6 +118,26 @@ class ManagerTemplateEngine {
 		return $this;
 	}
 
+	function addElementTpe($target, $param, $value)
+	{
+		$domTarget = explode( '.', $target );
+		$elementId = array_pop($domTarget);
+		
+		$dom =& $this->dom['elements'];
+		foreach( $domTarget as $key ) {
+			if(isset($dom[$key])) {
+				$dom =& $dom[$key]['childs'];
+			} else {
+				$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $target);
+				return $this;
+			}
+		}
+		
+		$dom[$elementId]['tpe'][$param] = $value;
+		
+		return $this;
+	}
+
 	//////////////////////////////////
 	// @todo: Doesn´t work! How to do?
 	/*
@@ -179,8 +199,8 @@ class ManagerTemplateEngine {
 		$total = count($dom);
 		foreach($dom as $elId=>$el) {
 			$additional = array();
-			if($iteration == 1) $additional = array('cssFirst'=>$cssFirst, 'cssLast'=>'');
 			if($iteration == $total) $additional = array('cssFirst'=>'','cssLast'=>$cssLast);
+			if($iteration == 1) $additional = array('cssFirst'=>$cssFirst, 'cssLast'=>'');
 			$phs = $this->prepareElementPlaceholders($el, $additional);
 			$output .= $this->fetchTpl($rowTpl, $phs);
 			$iteration++;
@@ -212,7 +232,7 @@ class ManagerTemplateEngine {
 		}
 		
 		$body = $this->renderRecursive($dom);
-		return $body['childs'];
+		return $body['childs'];	// join("\n", $body)
 	}
 
 	function renderRecursive($dom)
@@ -223,13 +243,21 @@ class ManagerTemplateEngine {
 		$total = count($dom);
 		foreach($dom as $elId=>$el) {
 			$additional = array();
-			if($iteration == 1) $additional = array('cssFirst'=>isset($el['tpe']['cssFirst']) ? $el['tpe']['cssFirst'] : '','cssLast'=>'');
 			if($iteration == $total) $additional = array('cssFirst'=>'','cssLast'=>isset($el['tpe']['cssLast']) ? $el['tpe']['cssLast'] : '');
+			if($iteration == 1) $additional = array('cssFirst'=>isset($el['tpe']['cssFirst']) ? $el['tpe']['cssFirst'] : '','cssLast'=>'');
 			$phs = $this->prepareElementPlaceholders($el, $additional);
 			$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
 			
 			if(!empty($el['childs'])) {
 				$recursive = array_merge($phs, $this->renderRecursive($el['childs']));
+				
+				// Handle blockTpl for Grids
+				if(isset($el['tpe']['blockTpl'])) {
+					foreach($el['tpe']['blockTpl'] as $block=>$blockTpls) {
+						if(isset($recursive[$block]) && isset($blockTpls['outerTpl'])) $recursive[$block] = $this->fetchTpl($blockTpls['outerTpl'], array_merge($phs, array('childs'=>$recursive[$block])));
+					}
+				}
+				
 				if(isset($el['tpe']['innerTpl'])) {
 					$phs['childs'] = $this->fetchTpl($el['tpe']['innerTpl'], $recursive);
 				} else {

@@ -54,6 +54,13 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 ->addElement('section', 'section3', 'userform.pane1.tab2.grid2_1', 	  		array('label'=>$_lang['change_password'].' 2'  )	, array('pos'=>'block2'))
 ->addElement('input', 	'pass5', 	'userform.pane1.tab2.grid2_1.section3', array('name'=>'pass5', 'type'=>'password', 'label'=>$_lang['change_password_new']))
 ->addElement('input', 	'pass6', 	'userform.pane1.tab2.grid2_1.section3', array('name'=>'pass6', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
+->addElement('section', 'section4', 'userform.pane1.tab2.grid2_1', 	  		array('label'=>$_lang['change_password'].' 3'  )	, array('pos'=>'block2'))
+->addElement('input', 	'pass7', 	'userform.pane1.tab2.grid2_1.section4', array('name'=>'pass7', 'type'=>'password', 'label'=>$_lang['change_password_new']))
+->addElement('input', 	'pass8', 	'userform.pane1.tab2.grid2_1.section4', array('name'=>'pass8', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
+
+// @todo: Lay out in custom mutate_password_dynamic.php inside directory MODxBS3/actions
+->addElementTpe('userform.pane1.tab2.grid2_1', 'blockTpl', array('block2'=>array('outerTpl'=>'form.section.container')))
+->addElementTpe('userform.pane1.tab2.grid2_1.section4', 'collapsed', '') // REMOVE COLLAPSED STATE
 
 ->addElement('input', 	'save', 	'userform', 							array('name'=>'save', 'type'=>'submit'))
 
