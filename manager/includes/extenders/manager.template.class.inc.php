@@ -4,6 +4,7 @@ if(IN_MANAGER_MODE!="true") die("<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please
 class ManagerTemplateEngine {
 
 	var $debug = false;
+	var $debugElements = false;
 	var $debugMsg = array();
 	var $dom = array();
 	var $placeholders = array();
@@ -266,7 +267,8 @@ class ManagerTemplateEngine {
 			}
 			
 			$elementTpl = $el['tpe']['tpl'];
-			$fetch = $this->fetchTpl($elementTpl, $phs);
+			$fetch = $this->debugElements ? '<div style="font-size:10px;font-family:monospace;font-weight: bold;">'.$el['target'].'.'.$elId.'</div>' : '';
+			$fetch .= $this->fetchTpl($elementTpl, $phs);
 			if(isset($el['tpe']['outerTpl'])) {
 				$output[$pos] .= $this->fetchTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs'=>$fetch))) . "\n";
 			} else {
@@ -410,7 +412,21 @@ class ManagerTemplateEngine {
 
 	function mergeDomBody()
 	{
-		return $this->fetchTpl('actions/'.$this->actionTpl, array());
+		global $modx, $manager_theme;
+		
+		$actionTpl = MODX_MANAGER_PATH . 'media/style/' . $manager_theme . '/tpl/actions/' . $this->actionTpl . '.php';
+		if (!is_readable($actionTpl)) $actionTpl = MODX_MANAGER_PATH . 'media/style/common/tpl/' . $this->actionTpl . '.php';
+		if (is_readable($actionTpl)) {
+			$phpcode = file_get_contents($actionTpl);
+			ob_start();
+			$tpe = $this;
+			require($actionTpl);
+			$template = ob_get_contents();
+			ob_end_clean();
+		} else {
+			return 'Action-Template not found: '.$this->actionTpl;
+		}
+		return $this->parsePlaceholders($template, array());
 	}
 	
 	function fetchTpl($tpl, $placeholders, $noParse=false)
@@ -421,8 +437,8 @@ class ManagerTemplateEngine {
 			$template = $this->tplCache[$tpl]['html'];
 		} else {
 			$tplFile = MODX_MANAGER_PATH . 'media/style/' . $manager_theme . '/tpl/' . $tpl . '.html';
-			if (!file_exists($tplFile)) $tplFile = MODX_MANAGER_PATH . 'media/style/common/tpl/' . $tpl . '.html';
-			if (file_exists($tplFile)) {
+			if (!is_readable($tplFile)) $tplFile = MODX_MANAGER_PATH . 'media/style/common/tpl/' . $tpl . '.html';
+			if (is_readable($tplFile)) {
 				$template             = file_get_contents($tplFile);
 				$tags = $modx->getTagsFromContent($template);
 				$this->tplCache[$tpl]['html'] = $template;

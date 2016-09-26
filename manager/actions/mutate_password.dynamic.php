@@ -32,6 +32,8 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 ///////////////////////////////////////////////
 // Configure body, can be modified via templates
 
+
+
 /////////////////////////////////////////////////////////////////////////////
 ////////////// EXAMPLE WITH TABS
 ->createBodyElement('form', 'userform', array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
@@ -58,18 +60,18 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 ->addElement('input', 	'pass7', 	'userform.pane1.tab2.grid2_1.section4', array('name'=>'pass7', 'type'=>'password', 'label'=>$_lang['change_password_new']))
 ->addElement('input', 	'pass8', 	'userform.pane1.tab2.grid2_1.section4', array('name'=>'pass8', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
 
-// @todo: Lay out in custom mutate_password_dynamic.php inside directory MODxBS3/actions
-->addElementTpe('userform.pane1.tab2.grid2_1', 'blockTpl', array('block2'=>array('outerTpl'=>'form.section.container')))
-->addElementTpe('userform.pane1.tab2.grid2_1.section4', 'collapsed', '') // REMOVE COLLAPSED STATE
-
 ->addElement('input', 	'save', 	'userform', 							array('name'=>'save', 'type'=>'submit'))
 
 // And some example text
 ->addElement('message', 'msg2',      'userform',   			array('message'=>'And again just some example text'))
+/////////////////////////////////////////////////////////////////////////////
 
+
+
+/*
 ///////////////////////////////////////////////////////////////////////////// 
 ////////////// ORIGINAL FORM 
-/*                                             
+                                             
 	->setActionTemplate('mutate_password.dynamic')
 	->setPlaceholder('title', $_lang['change_password'])
 
@@ -81,14 +83,6 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 	->addElement('input', 	'pass1', 	'userform.section1', 	array('name'=>'pass1', 'type'=>'password', 'label'=>$_lang['change_password_new']))
 	->addElement('input', 	'pass2', 	'userform.section1', 	array('name'=>'pass2', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
 	->addElement('input', 	'save', 	'userform', 			array('name'=>'save', 'type'=>'submit'))
-*/
-
-/*
-// Custom template or ManagerManager can modify matrix like this
-// First add message and new section
-$tpe->addElement('section', 'section2', 'userform',					array('label'=>'Example'))
-// Now move element to new section
-	->moveElement('userform.section1.pass2', 'userform.section2')
 */
  
 ;             
