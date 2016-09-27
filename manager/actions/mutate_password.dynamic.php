@@ -24,19 +24,14 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 ///////////////////////////////////////////////
 // Set Action Buttons in category main 
 ->setButton('main', 'Button1', array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.userform.save.click();', 'class'=>'transition'))
-->setButton('main', 'Button5', array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>"documentDirty=false; document.location.href='index.php?a=2';"))
-// Modify Action Buttons (also possible via custom-templates)
-->addButtonParam('main', 'Button5', 'onclick', "alert('true')")	// Add
-->setButtonParam('main', 'Button5', 'class', 'transition')	// Set
+->setButton('main', 'Button5', array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>"documentDirty=false; document.location.href='index.php?a=2';", 'class'=>'transition'))
 
 ///////////////////////////////////////////////
-// Configure body, can be modified via templates
-
-
+// Configure body, can be modified via custom action-templates
 
 /////////////////////////////////////////////////////////////////////////////
 ////////////// EXAMPLE WITH TABS
-->createBodyElement('form', 'userform', array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
+->addElement('form', 'userform', 	'', 									array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
 	
 ->addElement('message', 'msg1',     'userform',   							array('message'=>'Just some example text'))	
 	
@@ -75,7 +70,7 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 	->setActionTemplate('mutate_password.dynamic')
 	->setPlaceholder('title', $_lang['change_password'])
 
-	->createBodyElement('form', 'userform', array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
+	->addElement('form', 	'userform', '', 					array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
 
 	->addElement('input', 	'id',    	'userform', 		  	array('name'=>'id', 'type'=>'hidden', 'value'=>$_GET['id']))
 	->addElement('section', 'section1', 'userform',				array('label'=>$_lang['change_password']))

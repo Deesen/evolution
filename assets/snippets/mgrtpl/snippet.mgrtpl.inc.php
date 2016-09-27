@@ -42,6 +42,9 @@ switch($get) {
 	case 'footer':
 		// return $tpe->mergeDomActionButtons($outerTpl, $rowTpl);
 		break;
+	case 'debug':
+		return $tpe->mergeDebugMsg();
+		break;
 }
 return '';
 ?>
