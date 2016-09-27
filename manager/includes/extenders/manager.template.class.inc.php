@@ -21,11 +21,11 @@ class ManagerTemplateEngine {
 		global $modx, $modx_manager_charset;
 
 		// Prepare DOM-array
-		$this->dom['header'] = array();		// Everything related to <head>
-		$this->dom['buttons'] = array();	// All action-buttons in categories with "main" as top-bar 
+		$this->dom['head'] = array();		// Everything related to <head>
 		$this->dom['elements'] = array();	// All elements to be rendered in DOM
+		$this->dom['buttons'] = array();	// All action-buttons organized exactly like elements
 		$this->dom['footer'] = array();		// Everything related to new Footer-Bar
-
+		
 		// Prepare Header-Attributes
 		$modx->config['modx_lang_attribute'] = isset($modx->config['modx_lang_attribute']) ? $modx->config['modx_lang_attribute'] : 'en';
 		if(isset($modx->config['modx_textdir']) && $modx->config['modx_textdir'] === 'rtl') {
@@ -49,14 +49,23 @@ class ManagerTemplateEngine {
 		
 		// Get output of plugin-event "OnManagerMainFrameHeaderHTMLBlock"
 		$evtOut = $modx->invokeEvent('OnManagerMainFrameHeaderHTMLBlock');
-		$this->dom['header']['OnManagerMainFrameHeaderHTMLBlock'] = is_array($evtOut) ? implode("\n", $evtOut) : '';
+		$this->dom['head']['OnManagerMainFrameHeaderHTMLBlock'] = is_array($evtOut) ? implode("\n", $evtOut) : '';
+	}
+
+	function setButton($elType, $elId, $target='', $attr=array(), $tpe=array()) {
+		return $this->addDomElement($elType, $elId, $target, $attr, $tpe, 'buttons');
 	}
 
 	// Target example: "userform.tab2.section2"
 	function addElement($elType, $elId, $target='', $attr=array(), $tpe=array())
 	{
+		return $this->addDomElement($elType, $elId, $target, $attr, $tpe, 'elements');
+	}
+	
+	function addDomElement($elType, $elId, $target='', $attr=array(), $tpe=array(), $category)
+	{
 		// @todo: replace by $this->getDomIndex()
-		$dom =& $this->dom['elements'];
+		$dom =& $this->dom[$category];
 		if($target != '' && strtolower($target) != 'body') {
 			$domTarget = explode('.', $target);
 			foreach ($domTarget as $key) {
@@ -91,13 +100,23 @@ class ManagerTemplateEngine {
 	}
 	
 	// Example: 'userform.section1.pass2' to 'userform.section2'
+	function moveButton($sourceEl, $targetEl)
+	{
+		return $this->moveDomElement($sourceEl, $targetEl, 'buttons');
+	}
+	
 	function moveElement($sourceEl, $targetEl)
+	{
+		return $this->moveDomElement($sourceEl, $targetEl, 'elements');
+	}
+	
+	function moveDomElement($sourceEl, $targetEl, $category)
 	{
 		// @todo: replace by $this->getDomIndex() ?
 		$domSource = explode('.', $sourceEl); 
 		$sourceElId = array_pop($domSource);
 		
-		$dom       =& $this->dom['elements'];
+		$dom       =& $this->dom[$category];
 		foreach ($domSource as $key) {
 			if (isset($dom[$key])) {
 				$dom =& $dom[$key]['childs'];
@@ -116,12 +135,22 @@ class ManagerTemplateEngine {
 		return $this;
 	}
 
+	function addButtonTpe($target, $param, $value)
+	{
+		return $this->addDomElementTpe($target, $param, $value, 'buttons');
+	}
+
 	function addElementTpe($target, $param, $value)
+	{
+		return $this->addDomElementTpe($target, $param, $value, 'elements');
+	}
+
+	function addDomElementTpe($target, $param, $value, $category)
 	{
 		$domTarget = explode( '.', $target );
 		$elementId = array_pop($domTarget);
 		
-		$dom =& $this->dom['elements'];
+		$dom =& $this->dom[$category];
 		foreach( $domTarget as $key ) {
 			if(isset($dom[$key])) {
 				$dom =& $dom[$key]['childs'];
@@ -216,19 +245,26 @@ class ManagerTemplateEngine {
 		);
 	}
 
-	function mergeElement($element)
+	function mergeElement($element, $category='elements')
 	{
-		if($element =='body') $dom =& $this->dom['elements'];
+		if($element =='body') $dom =& $this->dom[$category];
 		else {
 			// @todo: replace by $this->getDomIndex()
 			$domTarget = explode( '.', $element );
-			$dom =& $this->dom['elements'];
-			foreach( $domTarget as $key ) {
-				if(isset($dom[$key])) {
-					$dom =& $dom[$key]['childs'];
-				} else {
-					$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $element);
-					return NULL;
+			$elId = array_pop($domTarget);
+			if(empty($domTarget)) {
+				$dom = array($elId=>$this->dom[$category][$elId]);
+			} else {
+				$dom =& $this->dom[$category];
+				foreach ($domTarget as $key) {
+					if (isset($dom[$key])) {
+						$dom =& $dom[$key]['childs'];
+					}
+					else {
+						$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $element);
+
+						return null;
+					}
 				}
 			}
 		}
@@ -240,8 +276,12 @@ class ManagerTemplateEngine {
 	function getTypeDefaults($elType, $attr)
 	{
 		$key = $elType;
-		if(isset($attr['type']) && !empty($attr['type'])) $key = $elType.'.'.$attr['type'];
-		return $this->typeDefaults[$key];
+		if(isset($attr['type']) && !empty($attr['type'])) {
+			$key2 = $elType.'.'.$attr['type'];
+			if(isset($this->typeDefaults[$key2])) return $this->typeDefaults[$key2];
+		}
+		if(isset($this->typeDefaults[$key])) return $this->typeDefaults[$key];
+		return array();
 	}
 
 	function setTypeDefaults($type, $defaults) {
@@ -259,30 +299,15 @@ class ManagerTemplateEngine {
 		return $this;
 	}
 
-	function setButton($category, $id, $params) {
-		$this->dom['buttons'][$category][$id] = $params;
-		return $this;
-	}
-
-	function addButtonParam($category, $id, $param, $value) {
-		$this->dom['buttons'][$category][$id][$param] .= $value;
-		return $this;
-	}
-
-	function setButtonParam($category, $id, $param, $value) {
-		$this->dom['buttons'][$category][$id][$param] = $value;
-		return $this;
-	}
-
 	function registerCssSrc($id, $src) {
 		// if file_exists()
-		$this->dom['header']['css']['src'][$id] = $this->parsePlaceholders($src);
+		$this->dom['head']['css']['src'][$id] = $this->parsePlaceholders($src);
 		return $this;
 	}
 
 	function registerScriptSrc($id, $src, $version=NULL) {
 		// if file_exists()
-		$this->dom['header']['js'][$id] = array(
+		$this->dom['head']['js'][$id] = array(
 			'src'=>$this->parsePlaceholders($src),
 			'version'=>$version
 		);
@@ -294,7 +319,7 @@ class ManagerTemplateEngine {
 		$script = file_get_contents(MODX_MANAGER_PATH.$file);
 		$script = $this->parsePlaceholders($script, $placeholder);
 		
-		$this->dom['header']['js'][$id] = array(
+		$this->dom['head']['js'][$id] = array(
 			'script'=>$script,
 			'file'=>$file
 		);
@@ -313,7 +338,7 @@ class ManagerTemplateEngine {
 	function mergeDomCss()
 	{
 		$output = '';
-		foreach($this->dom['header']['css']['src'] as $id=>$src) {
+		foreach($this->dom['head']['css']['src'] as $id=>$src) {
 			$output .= '	<link rel="stylesheet" type="text/css" href="'.$src.'" />'."\n";
 		};
 		return $output;
@@ -322,30 +347,19 @@ class ManagerTemplateEngine {
 	function mergeDomJs()
 	{
 		$output = '';
-		foreach($this->dom['header']['js'] as $id=>$js) {
+		foreach($this->dom['head']['js'] as $id=>$js) {
 			if(isset($js['src'])) 		$output .= '	<script src="'.$js['src'].'" type="text/javascript"></script>'."\n"; 
 			if(isset($js['script']))	$output .= '	<script type="text/javascript">'.$js['script'].'</script>'."\n";
 		};
 		
-		$output .= $this->dom['header']['OnManagerMainFrameHeaderHTMLBlock'];
+		$output .= $this->dom['head']['OnManagerMainFrameHeaderHTMLBlock'];
 		
 		return $output;
 	}
 
-	function mergeDomActionButtons($category, $outerTpl, $rowTpl)
+	function mergeDomActionButtons($category)
 	{
-		$category = !empty($category) ? $category : 'main';
-		$outerTpl = !empty($outerTpl) ? $outerTpl : 'actionButtons';
-		$rowTpl = !empty($rowTpl) ? $rowTpl : 'actionButton';
-
-		$output = '';
-		if(!empty($this->dom['buttons'][$category])) {
-			foreach($this->dom['buttons'][$category] as $id=>$placeholders) {
-				$output .= $this->fetchTpl($rowTpl, $placeholders);
-			};
-		};
-
-		return $this->fetchTpl($outerTpl, array('buttons'=>$output));
+		return $this->mergeElement($category, 'buttons');
 	}
 
 	function mergeDomAlerts($outerTpl, $rowTpl)

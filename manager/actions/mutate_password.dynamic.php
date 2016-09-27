@@ -23,8 +23,8 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 
 ///////////////////////////////////////////////
 // Set Action Buttons in category main 
-->setButton('main', 'Button1', array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.userform.save.click();', 'class'=>'transition'))
-->setButton('main', 'Button5', array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>"documentDirty=false; document.location.href='index.php?a=2';", 'class'=>'transition'))
+->setButton('action.button', 'Button1', 'main', array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.userform.save.click();', 'class'=>'transition'))
+->setButton('action.button', 'Button5', 'main', array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"],'href'=>'javascript:void(0)','onclick'=>"documentDirty=false; document.location.href='index.php?a=2';", 'class'=>'transition'))
 
 ///////////////////////////////////////////////
 // Configure body, can be modified via custom action-templates

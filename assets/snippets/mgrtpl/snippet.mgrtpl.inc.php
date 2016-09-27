@@ -22,7 +22,7 @@ switch($get) {
 		return $tpe->mergeDomJs();
 		break;
 	case 'buttons':
-		return $tpe->mergeDomActionButtons($category, $outerTpl, $rowTpl);
+		return $tpe->mergeDomActionButtons($category);
 		break;
 	case 'alerts':
 		return $tpe->mergeDomAlerts($outerTpl, $rowTpl);

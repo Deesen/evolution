@@ -13,16 +13,22 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 // Default injected Javascript - allows use of MODX-placeholders
 ->registerScriptFromFile('modx_jq','media/script/manager.js')
 
+->setTypeDefaults('action.buttons',	array('tpl'=>'action.buttons'))
+->setTypeDefaults('action.button',	array('tpl'=>'action.button'))
+->setTypeDefaults('action.select',	array('tpl'=>'action.select'))
 ->setTypeDefaults('form', 			array('tpl'=>'form'))
 ->setTypeDefaults('input.hidden', 	array('tpl'=>'form.input.hidden'))
 ->setTypeDefaults('input.password', array('tpl'=>'form.input.password', 'outerTpl'=>'form.table.row'))
 ->setTypeDefaults('input.submit', 	array('tpl'=>'form.input.submit'))
+->setTypeDefaults('select.option', 	array('tpl'=>'form.select.option'))
 ->setTypeDefaults('message', 		array('tpl'=>'message'))
 ->setTypeDefaults('section', 		array('tpl'=>'form.section', 'innerTpl'=>'form.table'))
 ->setTypeDefaults('tabpane', 		array('tpl'=>'tab.container'))
 ->setTypeDefaults('tab',	 		array('tpl'=>'tab.tab', 'cssFirst'=>'in active'))
 ->setTypeDefaults('grid',	 		array('tpl'=>'grid.1column'))
 
+// Prepare main-buttons
+->setButton('action.buttons', 'main', '');
 ;  
 
 if(isset($_REQUEST['r'])) $this->setPlaceholder('doRefresh', 'doRefresh("'. $_REQUEST['r'] .'");');
