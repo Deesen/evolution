@@ -18,7 +18,7 @@ class ManagerTemplateEngine {
 
 	function __construct()
 	{
-		global $modx, $modx_manager_charset;
+		global $modx, $modx_manager_charset, $_lang;
 
 		// Prepare DOM-array
 		$this->dom['head'] = array();		// Everything related to <head>
@@ -36,10 +36,13 @@ class ManagerTemplateEngine {
 		}
 
 		$this->setPlaceholder('modx_manager_charset',$modx_manager_charset);
+
+		// Load template styles
+		require MODX_MANAGER_PATH.'media/style/'.$modx->config['manager_theme'].'/style.php';
 		
 		if(!isset($modx->config['mgr_jquery_path']))  $modx->config['mgr_jquery_path'] = 'media/script/jquery/jquery.min.js';
 		if(!isset($modx->config['mgr_date_picker_path'])) $modx->config['mgr_date_picker_path'] = 'media/script/air-datepicker/datepicker.inc.php';
-
+		
 		// Load template-engine defaults
 		require MODX_MANAGER_PATH.'media/style/common/engine.php';
 		
@@ -52,29 +55,34 @@ class ManagerTemplateEngine {
 		$this->dom['head']['OnManagerMainFrameHeaderHTMLBlock'] = is_array($evtOut) ? implode("\n", $evtOut) : '';
 	}
 
-	function setButton($elType, $elId, $target='', $attr=array(), $tpe=array()) {
-		return $this->addDomElement($elType, $elId, $target, $attr, $tpe, 'buttons');
+	function setButton($elType, $target='', $attr=array(), $tpe=array()) {
+		return $this->setDomElement($elType, $target, $attr, $tpe, 'buttons');
 	}
 
 	// Target example: "userform.tab2.section2"
-	function addElement($elType, $elId, $target='', $attr=array(), $tpe=array())
+	function setElement($elType, $target='', $attr=array(), $tpe=array())
 	{
-		return $this->addDomElement($elType, $elId, $target, $attr, $tpe, 'elements');
+		return $this->setDomElement($elType, $target, $attr, $tpe, 'elements');
 	}
 	
-	function addDomElement($elType, $elId, $target='', $attr=array(), $tpe=array(), $category)
+	function setDomElement($elType, $target='', $attr=array(), $tpe=array(), $category)
 	{
 		// @todo: replace by $this->getDomIndex()
 		$dom =& $this->dom[$category];
-		if($target != '' && strtolower($target) != 'body') {
-			$domTarget = explode('.', $target);
+		$domTarget = explode( '.', $target );
+		$elId = array_pop($domTarget);
+
+		if(empty($domTarget)) {
+			$dom = array($elId=>$this->dom[$category][$elId]);
+		} else if($target != '' && strtolower($target) != 'body') {
+			$dom =& $this->dom[$category];
 			foreach ($domTarget as $key) {
 				if (isset($dom[$key])) {
 					$dom =& $dom[$key]['childs'];
 				}
 				else {
-					$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $target);
-					return $this;
+					$this->debugMsg[] = sprintf('setDomElement(%s) : Key "%s" not found for target "%s"', $category, $key, $elId);
+					return null;
 				}
 			}
 		}
@@ -122,7 +130,7 @@ class ManagerTemplateEngine {
 				$dom =& $dom[$key]['childs'];
 			}
 			else {
-				$this->debugMsg[] = sprintf('moveElement(): Key "%s" not found of source "%s"', $key, $sourceEl);
+				$this->debugMsg[] = sprintf('moveDomElement(%s): Key "%s" not found of source "%s"', $category, $key, $sourceEl);
 				return $this;
 			}
 		}
@@ -155,7 +163,7 @@ class ManagerTemplateEngine {
 			if(isset($dom[$key])) {
 				$dom =& $dom[$key]['childs'];
 			} else {
-				$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $target);
+				$this->debugMsg[] = sprintf('addDomElementTpe(%s) : Key "%s" not found for target "%s"', $category, $key, $target);
 				return $this;
 			}
 		}
@@ -215,7 +223,7 @@ class ManagerTemplateEngine {
 			if(isset($dom[$key])) {
 				$dom =& $dom[$key]['childs'];
 			} else {
-				$this->debugMsg[] = sprintf('mergeElementsList() : Key "%s" not found for target "%s"', $key, $element);
+				$this->debugMsg[] = sprintf('mergeElementsList(elements) : Key "%s" not found for target "%s"', $key, $element);
 				return NULL;
 			}
 		}
@@ -261,8 +269,7 @@ class ManagerTemplateEngine {
 						$dom =& $dom[$key]['childs'];
 					}
 					else {
-						$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $element);
-
+						$this->debugMsg[] = sprintf('mergeElement(%s) : Key "%s" not found for target "%s"', $category, $key, $element);
 						return null;
 					}
 				}
