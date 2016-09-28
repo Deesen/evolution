@@ -1,6 +1,13 @@
 <?php
 if(IN_MANAGER_MODE!="true") die("<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please use the MODX Content Manager instead of accessing this file directly.");
 
+global $_style, $_lang;
+
+// Prepare template-engine
+$tpe =& $modx->manager->tpe;
+$tpe->setActionTemplate('mutate_content.dynamic')
+	->setPlaceholder('title', $_REQUEST['id'] ? $_lang['edit_resource_title'] . ' <small>('. $_REQUEST['id'].')</small>' : $_lang['create_resource_title']);
+
 /********************/
 $sd=isset($_REQUEST['dir'])?'&dir='.$_REQUEST['dir']:'&dir=DESC';
 $sb=isset($_REQUEST['sort'])?'&sort='.$_REQUEST['sort']:'&sort=createdon';
@@ -147,1093 +154,720 @@ if (!isset ($_REQUEST['id'])) {
 if (isset ($_POST['which_editor'])) {
     $modx->config['which_editor'] = $_POST['which_editor'];
 }
-?>
-<script type="text/javascript">
-/* <![CDATA[ */
-window.addEvent('domready', function(){
-    $$('img[src=<?php echo $_style["icons_tooltip_over"]; ?>]').each(function(help_img) {
-        help_img.removeProperty('onclick');
-        help_img.removeProperty('onmouseover');
-        help_img.removeProperty('onmouseout');
-        help_img.setProperty('title', help_img.getProperty('alt') );
-        help_img.setProperty('class', 'tooltip' );
-        if (window.ie) help_img.removeProperty('alt');
-    });
-    new Tips($$('.tooltip'),{className:'custom'} );
-});
 
-// save tree folder state
-if (parent.tree) parent.tree.saveFolderState();
+// Template engine - Prepare action-buttons
+$tpe->setButton('action.button', 'main.Button1', array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.mutate.save.click();', 'class'=>'transition'));
+$tpe->setButton('action.select', 'main.Button1.select', array('id'=>'stay', 'name'=>'stay', 'manual'=>'form="mutate"'));   // Hide from output
+if ($modx->hasPermission('new_document')) {
+	$tpe->setButton('select.option', 'main.Button1.select.option1', array('id'=>'stay1', 'value'=>'1', 'label'=>$_lang['stay_new'], 'selected'=>$_REQUEST['stay']=='1' ? ' selected="selected"' : ''));
+}
+$tpe->setButton('select.option', 'main.Button1.select.option2', array('id'=>'stay2', 'value'=>'2', 'label'=>$_lang['stay'], 'selected'=>$_REQUEST['stay']=='2' ? ' selected="selected"' : ''));
+$tpe->setButton('select.option', 'main.Button1.select.option3', array('id'=>'stay3', 'value'=>'', 'label'=>$_lang['close'], 'selected'=>$_REQUEST['stay']=='3' ? ' selected="selected"' : ''));
 
-function changestate(element) {
-    currval = eval(element).value;
-    if (currval==1) {
-        eval(element).value=0;
-    } else {
-        eval(element).value=1;
-    }
-    documentDirty=true;
+if ($_REQUEST['a'] == '4' || $_REQUEST['a'] == '72') {
+	$tpe->setButton('action.button', 'main.Button6', array('label'=>$_lang['duplicate'], 'icon'=>$_style["icons_resource_duplicate"], 'href'=>'#','onclick'=>'', 'class'=>'disabled'));
+	$tpe->setButton('action.button', 'main.Button3', array('label'=>$_lang['delete'], 'icon'=>$_style["icons_delete_document"], 'href'=>'#','onclick'=>'', 'class'=>'disabled'));
+} else {
+	$tpe->setButton('action.button', 'main.Button6', array('label'=>$_lang['duplicate'], 'icon'=>$_style["icons_resource_duplicate"], 'href'=>'#','onclick'=>'duplicatedocument();'));
+	$tpe->setButton('action.button', 'main.Button3', array('label'=>$_lang['delete'], 'icon'=>$_style["icons_delete_document"], 'href'=>'#','onclick'=>'deletedocument();'));
 }
 
-function deletedocument() {
-    if (confirm("<?php echo $_lang['confirm_delete_resource']?>")==true) {
-        document.location.href="index.php?id=" + document.mutate.id.value + "&a=6<?php echo $add_path; ?>";
-    }
-}
+$onclick = $id==0 ? "document.location.href='index.php?a=2';" : "document.location.href='index.php?a=3&amp;id=$id".htmlspecialchars($add_path)."';";
+$tpe->setButton('action.button', 'main.Button4', array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"], 'href'=>'#','onclick'=>'documentDirty=false;'.$onclick, 'class'=>'transition'));
 
-function duplicatedocument(){
-    if(confirm("<?php echo $_lang['confirm_resource_duplicate']?>")==true) {
-        document.location.href="index.php?id=<?php echo $_REQUEST['id']?>&a=94<?php echo $add_path; ?>";
-    }
-}
+$onclick = "window.open('".$modx->makeUrl($id)."','previeWin');";
+$tpe->setButton('action.button', 'main.Button5', array('label'=>$_lang['preview'], 'icon'=>$_style["icons_preview_resource"], 'href'=>'#','onclick'=>'documentDirty=false;'.$onclick, 'class'=>'transition'));
 
-var allowParentSelection = false;
-var allowLinkSelection = false;
+// Prepare Javascript-Object for transferring parameters
+$modx_params = json_encode(array(
+	'lang'=>array(
+		'confirm_delete_resource'=>$_lang["confirm_delete_resource"],
+		'confirm_resource_duplicate'=>$_lang["confirm_resource_duplicate"],
+		'illegal_parent_self'=>$_lang["illegal_parent_self"],
+		'illegal_parent_child'=>$_lang["illegal_parent_child"],
+		'tmplvar_change_template_msg'=>$_lang["tmplvar_change_template_msg"],
+		'parameter'=>$_lang["parameter"],
+		'value'=>$_lang["value"],
+	),
+	'style'=>array(
+		'icons_tooltip_over'=>$_style["icons_tooltip_over"],
+		'tree_folder'=>$_style["tree_folder"],
+		'icons_set_parent'=>$_style["icons_set_parent"],
+	),
+	'param'=>array(
+		'add_path'=>$add_path,
+		'id'=>$_REQUEST['id'],
+		'action'=>$modx->manager->action,
+	)
+));
+$tpe->registerScriptFromFile('mutate_content.dynamic', 'media/script/actions/mutate_content.dynamic.js', array('modx_params'=>$modx_params));
 
-function enableLinkSelection(b) {
-    parent.tree.ca = "link";
-    var closed = "<?php echo $_style["tree_folder"] ?>";
-    var opened = "<?php echo $_style["icons_set_parent"] ?>";
-    if (b) {
-        document.images["llock"].src = opened;
-        allowLinkSelection = true;
-    }
-    else {
-        document.images["llock"].src = closed;
-        allowLinkSelection = false;
-    }
-}
+// Create Form
+$tpe->setElement('form', 'mutate', array('name'=>'mutate', 'action'=>'index.php', 'method'=>'post', 'class'=>'content', 'enctype'=>'enctype="multipart/form-data"', 'onsubmit'=>'documentDirty=false;'));
 
-function setLink(lId) {
-    if (!allowLinkSelection) {
-        window.location.href="index.php?a=3&id="+lId+"<?php echo $add_path; ?>";
-        return;
-    }
-    else {
-        documentDirty=true;
-        document.mutate.ta.value=lId;
-    }
-}
-
-function enableParentSelection(b) {
-    parent.tree.ca = "parent";
-    var closed = "<?php echo $_style["tree_folder"] ?>";
-    var opened = "<?php echo $_style["icons_set_parent"] ?>";
-    if (b) {
-        document.images["plock"].src = opened;
-        allowParentSelection = true;
-    }
-    else {
-        document.images["plock"].src = closed;
-        allowParentSelection = false;
-    }
-}
-
-function setParent(pId, pName) {
-    if (!allowParentSelection) {
-        window.location.href="index.php?a=3&id="+pId+"<?php echo $add_path; ?>";
-        return;
-    }
-    else {
-        if (pId==0 || checkParentChildRelation(pId, pName)) {
-            documentDirty=true;
-            document.mutate.parent.value=pId;
-            var elm = document.getElementById('parentName');
-            if (elm) {
-                elm.innerHTML = (pId + " (" + pName + ")");
-            }
-        }
-    }
-}
-
-// check if the selected parent is a child of this document
-function checkParentChildRelation(pId, pName) {
-    var sp;
-    var id = document.mutate.id.value;
-    var tdoc = parent.tree.document;
-    var pn = (tdoc.getElementById) ? tdoc.getElementById("node"+pId) : tdoc.all["node"+pId];
-    if (!pn) return;
-    if (pn.id.substr(4)==id) {
-        alert("<?php echo $_lang['illegal_parent_self']?>");
-        return;
-    }
-    else {
-        while (pn.getAttribute("p")>0) {
-            pId = pn.getAttribute("p");
-            pn = (tdoc.getElementById) ? tdoc.getElementById("node"+pId) : tdoc.all["node"+pId];
-            if (pn.id.substr(4)==id) {
-                alert("<?php echo $_lang['illegal_parent_child']?>");
-                return;
-            }
-        }
-    }
-    return true;
-}
-
-function clearKeywordSelection() {
-    var opt = document.mutate.elements["keywords[]"].options;
-    for (i = 0; i < opt.length; i++) {
-        opt[i].selected = false;
-    }
-}
-
-function clearMetatagSelection() {
-    var opt = document.mutate.elements["metatags[]"].options;
-    for (i = 0; i < opt.length; i++) {
-        opt[i].selected = false;
-    }
-}
-
-var curTemplate = -1;
-var curTemplateIndex = 0;
-function storeCurTemplate() {
-    var dropTemplate = document.getElementById('template');
-    if (dropTemplate) {
-        for (var i=0; i<dropTemplate.length; i++) {
-            if (dropTemplate[i].selected) {
-                curTemplate = dropTemplate[i].value;
-                curTemplateIndex = i;
-            }
-        }
-    }
-}
-function templateWarning() {
-    var dropTemplate = document.getElementById('template');
-    if (dropTemplate) {
-        for (var i=0; i<dropTemplate.length; i++) {
-            if (dropTemplate[i].selected) {
-                newTemplate = dropTemplate[i].value;
-                break;
-            }
-        }
-    }
-    if (curTemplate == newTemplate) {return;}
-
-    if(documentDirty===true) {
-        if (confirm('<?php echo $_lang['tmplvar_change_template_msg']?>')) {
-            documentDirty=false;
-            document.mutate.a.value = <?php echo $modx->manager->action; ?>;
-            document.mutate.newtemplate.value = newTemplate;
-            document.mutate.submit();
-        } else {
-            dropTemplate[curTemplateIndex].selected = true;
-        }
-    }
-    else {
-        document.mutate.a.value = <?php echo $modx->manager->action; ?>;
-        document.mutate.newtemplate.value = newTemplate;
-        document.mutate.submit();
-    }
-}
-
-// Added for RTE selection
-function changeRTE() {
-    var whichEditor = document.getElementById('which_editor');
-    if (whichEditor) {
-        for (var i = 0; i < whichEditor.length; i++) {
-            if (whichEditor[i].selected) {
-                newEditor = whichEditor[i].value;
-                break;
-            }
-        }
-    }
-    var dropTemplate = document.getElementById('template');
-    if (dropTemplate) {
-        for (var i = 0; i < dropTemplate.length; i++) {
-            if (dropTemplate[i].selected) {
-                newTemplate = dropTemplate[i].value;
-                break;
-            }
-        }
-    }
-
-    documentDirty=false;
-    document.mutate.a.value = <?php echo $modx->manager->action; ?>;
-    document.mutate.newtemplate.value = newTemplate;
-    document.mutate.which_editor.value = newEditor;
-    document.mutate.submit();
-}
-
-/**
- * Snippet properties
- */
-
-var snippetParams = {};     // Snippet Params
-var currentParams = {};     // Current Params
-var lastsp, lastmod = {};
-
-function showParameters(ctrl) {
-    var c,p,df,cp;
-    var ar,desc,value,key,dt;
-
-    cp = {};
-    currentParams = {}; // reset;
-
-    if (ctrl) {
-        f = ctrl.form;
-    } else {
-        f= document.forms['mutate'];
-        ctrl = f.snippetlist;
-    }
-
-    // get display format
-    df = "";//lastsp = ctrl.options[ctrl.selectedIndex].value;
-
-    // load last modified param values
-    if (lastmod[df]) cp = lastmod[df].split("&");
-    for (p = 0; p < cp.length; p++) {
-        cp[p]=(cp[p]+'').replace(/^\s|\s$/,""); // trim
-        ar = cp[p].split("=");
-        currentParams[ar[0]]=ar[1];
-    }
-
-    // setup parameters
-    dp = (snippetParams[df]) ? snippetParams[df].split("&"):[""];
-    if (dp) {
-        t='<table width="100%" class="displayparams"><thead><tr><td width="50%"><?php echo $_lang['parameter']?><\/td><td width="50%"><?php echo $_lang['value']?><\/td><\/tr><\/thead>';
-        for (p = 0; p < dp.length; p++) {
-            dp[p]=(dp[p]+'').replace(/^\s|\s$/,""); // trim
-            ar = dp[p].split("=");
-            key = ar[0]     // param
-            ar = (ar[1]+'').split(";");
-            desc = ar[0];   // description
-            dt = ar[1];     // data type
-            value = decode((currentParams[key]) ? currentParams[key]:(dt=='list') ? ar[3] : (ar[2])? ar[2]:'');
-            if (value!=currentParams[key]) currentParams[key] = value;
-            value = (value+'').replace(/^\s|\s$/,""); // trim
-            if (dt) {
-                switch(dt) {
-                    case 'int':
-                        c = '<input type="text" name="prop_'+key+'" value="'+value+'" size="30" onchange="setParameter(\''+key+'\',\''+dt+'\',this)" \/>';
-                        break;
-                    case 'list':
-                        c = '<select name="prop_'+key+'" height="1" style="width:168px" onchange="setParameter(\''+key+'\',\''+dt+'\',this)">';
-                        ls = (ar[2]+'').split(",");
-                        if (currentParams[key]==ar[2]) currentParams[key] = ls[0]; // use first list item as default
-                        for (i=0;i<ls.length;i++) {
-                            c += '<option value="'+ls[i]+'"'+((ls[i]==value)? ' selected="selected"':'')+'>'+ls[i]+'<\/option>';
-                        }
-                        c += '<\/select>';
-                        break;
-                    default:  // string
-                        c = '<input type="text" name="prop_'+key+'" value="'+value+'" size="30" onchange="setParameter(\''+key+'\',\''+dt+'\',this)" \/>';
-                        break;
-
-                }
-                t +='<tr><td bgcolor="#FFFFFF" width="50%">'+desc+'<\/td><td bgcolor="#FFFFFF" width="50%">'+c+'<\/td><\/tr>';
-            };
-        }
-        t+='<\/table>';
-        td = (document.getElementById) ? document.getElementById('snippetparams'):document.all['snippetparams'];
-        td.innerHTML = t;
-    }
-    implodeParameters();
-}
-
-function setParameter(key,dt,ctrl) {
-    var v;
-    if (!ctrl) return null;
-    switch (dt) {
-        case 'int':
-            ctrl.value = parseInt(ctrl.value);
-            if (isNaN(ctrl.value)) ctrl.value = 0;
-            v = ctrl.value;
-            break;
-        case 'list':
-            v = ctrl.options[ctrl.selectedIndex].value;
-            break;
-        default:
-            v = ctrl.value+'';
-            break;
-    }
-    currentParams[key] = v;
-    implodeParameters();
-}
-
-function resetParameters() {
-    document.mutate.params.value = "";
-    lastmod[lastsp]="";
-    showParameters();
-}
-// implode parameters
-function implodeParameters() {
-    var v, p, s = '';
-    for (p in currentParams) {
-        v = currentParams[p];
-        if (v) s += '&'+p+'='+ encode(v);
-    }
-    //document.forms['mutate'].params.value = s;
-    if (lastsp) lastmod[lastsp] = s;
-}
-
-function encode(s) {
-    s = s+'';
-    s = s.replace(/\=/g,'%3D'); // =
-    s = s.replace(/\&/g,'%26'); // &
-    return s;
-}
-
-function decode(s) {
-    s = s+'';
-    s = s.replace(/\%3D/g,'='); // =
-    s = s.replace(/\%26/g,'&'); // &
-    return s;
-}
-/* ]]> */
-</script>
-
-<form name="mutate" id="mutate" class="content" method="post" enctype="multipart/form-data" action="index.php" onsubmit="documentDirty=false;">
-<?php
-// invoke OnDocFormPrerender event
 $evtOut = $modx->invokeEvent('OnDocFormPrerender', array(
-    'id' => $id,
+	'id' => $id,
 	'template' => $content['template']
 ));
+if (is_array($evtOut)) $tpe->setElement('raw', 'mutate.OnDocFormPrerender', array('content'=>implode('', $evtOut)));
 
-if (is_array($evtOut))
-    echo implode('', $evtOut);
-	
 /*************************/	
 $dir=isset($_REQUEST['dir'])?$_REQUEST['dir']:'';
 $sort=isset($_REQUEST['sort'])?$_REQUEST['sort']:'createdon';
 $page=isset($_REQUEST['page'])?(int)$_REQUEST['page']:'';
 /*************************/
 
-?>
-<input type="hidden" name="a" value="5" />
-<input type="hidden" name="id" value="<?php echo $content['id']?>" />
-<input type="hidden" name="mode" value="<?php echo (int) $_REQUEST['a']?>" />
-<input type="hidden" name="MAX_FILE_SIZE" value="<?php echo isset($modx->config['upload_maxsize']) ? $modx->config['upload_maxsize'] : 1048576?>" />
-<input type="hidden" name="refresh_preview" value="0" />
-<input type="hidden" name="newtemplate" value="" />
-<input type="hidden" name="dir" value="<?php echo $dir;?>" />
-<input type="hidden" name="sort" value="<?php echo $sort;?>" />
-<input type="hidden" name="page" value="<?php echo $page;?>" />
+$tpe->setElement('input', 'mutate.a',               array('name'=>'a', 'type'=>'hidden', 'value'=>5));
+$tpe->setElement('input', 'mutate.id',              array('name'=>'id', 'type'=>'hidden', 'value'=>$content['id']));
+$tpe->setElement('input', 'mutate.mode',            array('name'=>'mode', 'type'=>'hidden', 'value'=>(int) $_REQUEST['a']));
+$tpe->setElement('input', 'mutate.MAX_FILE_SIZE',   array('name'=>'MAX_FILE_SIZE', 'type'=>'hidden', 'value'=>isset($modx->config['upload_maxsize']) ? $modx->config['upload_maxsize'] : 1048576));
+$tpe->setElement('input', 'mutate.refresh_preview', array('name'=>'refresh_preview', 'type'=>'hidden', 'value'=>0));
+$tpe->setElement('input', 'mutate.newtemplate',     array('name'=>'newtemplate', 'type'=>'hidden', 'value'=>''));
+$tpe->setElement('input', 'mutate.dir',             array('name'=>'dir', 'type'=>'hidden', 'value'=>$dir));
+$tpe->setElement('input', 'mutate.sort',            array('name'=>'sort', 'type'=>'hidden', 'value'=>$sort));
+$tpe->setElement('input', 'mutate.page',            array('name'=>'page', 'type'=>'hidden', 'value'=>$page));
 
-<fieldset id="create_edit">
-    <h1><?php if ($_REQUEST['id']){echo $_lang['edit_resource_title'] . ' <small>('. $_REQUEST['id'].')</small>'; } else { echo $_lang['create_resource_title'];}?></h1>
+// breadcrumbs
+if ($modx->config['use_breadcrumbs']) {
+	$temp = array();
+	$title = isset($content['pagetitle']) ? $content['pagetitle'] : $_lang['create_resource_title'];
 
-    <?php
-    // breadcrumbs
-    if ($modx->config['use_breadcrumbs']) {
-        $temp = array();
-        $title = isset($content['pagetitle']) ? $content['pagetitle'] : $_lang['create_resource_title'];
+	if (isset($_REQUEST['id']) && $content['parent'] != 0) {
+		$bID = (int)$_REQUEST['id'];
+		$temp = $modx->getParentIds($bID);
+	} else if (isset($_REQUEST['pid'])) {
+		$bID = (int)$_REQUEST['pid'];
+		$temp = $modx->getParentIds($bID);
+		array_unshift($temp, $bID);
+	}
 
-        if (isset($_REQUEST['id']) && $content['parent'] != 0) {
-            $bID = (int)$_REQUEST['id'];
-            $temp = $modx->getParentIds($bID);
-        } else if (isset($_REQUEST['pid'])) {
-            $bID = (int)$_REQUEST['pid'];
-            $temp = $modx->getParentIds($bID);
-            array_unshift($temp, $bID);
-        }
+	if ($temp) {
+		$parents = implode(',', $temp);
 
-        if ($temp) {
-            $parents = implode(',', $temp);
-
-            if (!empty($parents)) {
-                $where = "FIND_IN_SET(id,'{$parents}') DESC";
-                $rs = $modx->db->select('id, pagetitle', $tbl_site_content, "id IN ({$parents})", $where);
-                while ($row = $modx->db->getRow($rs)) {
-                    $out .= '<li class="breadcrumbs__li">
+		if (!empty($parents)) {
+			$where = "FIND_IN_SET(id,'{$parents}') DESC";
+			$rs = $modx->db->select('id, pagetitle', $tbl_site_content, "id IN ({$parents})", $where);
+			while ($row = $modx->db->getRow($rs)) {
+				$out .= '<li class="breadcrumbs__li">
                                 <a href="index.php?a=27&id=' . $row['id'] . '" class="breadcrumbs__a">' . htmlspecialchars($row['pagetitle'], ENT_QUOTES, $modx->config['modx_charset']) . '</a>
                                 <span class="breadcrumbs__sep">&gt;</span>
                             </li>';
-                }
-            }
-        }
-
-        $out .= '<li class="breadcrumbs__li breadcrumbs__li_current">' . $title . '</li>';
-        echo '<ul class="breadcrumbs">' . $out . '</ul>';
-    }
-    ?>
-
-<div id="actions">
-      <ul class="actionButtons">
-          <li id="Button1" class="transition">
-            <a href="#" class="primary" onclick="documentDirty=false; document.mutate.save.click();">
-              <img alt="icons_save" src="<?php echo $_style["icons_save"]; ?>" /> <?php echo $_lang['save']; ?>
-            </a>
-            <span class="plus"> + </span>
-            <select id="stay" name="stay">
-      <?php if ($modx->hasPermission('new_document')) { ?>
-              <option id="stay1" value="1" <?php echo $_REQUEST['stay']=='1' ? ' selected="selected"' : ''?> ><?php echo $_lang['stay_new']?></option>
-      <?php } ?>
-              <option id="stay2" value="2" <?php echo $_REQUEST['stay']=='2' ? ' selected="selected"' : ''?> ><?php echo $_lang['stay']?></option>
-              <option id="stay3" value=""  <?php echo $_REQUEST['stay']=='' ? ' selected="selected"' : ''?>  ><?php echo $_lang['close']?></option>
-            </select>
-          </li>
-      <?php if ($_REQUEST['a'] == '4' || $_REQUEST['a'] == '72') { ?>
-          <li id="Button6" class="disabled"><a href="#" onclick="duplicatedocument();"><img src="<?php echo $_style["icons_resource_duplicate"] ?>" alt="icons_resource_duplicate" /> <?php echo $_lang['duplicate']?></a></li>
-          <li id="Button3" class="disabled"><a href="#" onclick="deletedocument();"><img src="<?php echo $_style["icons_delete_document"] ?>" alt="icons_delete_document" /> <?php echo $_lang['delete']?></a></li>
-      <?php } else { ?>
-          <li id="Button6"><a href="#" onclick="duplicatedocument();"><img src="<?php echo $_style["icons_resource_duplicate"] ?>" alt="icons_resource_duplicate" /> <?php echo $_lang['duplicate']?></a></li>
-          <li id="Button3"><a href="#" onclick="deletedocument();"><img src="<?php echo $_style["icons_delete_document"] ?>" alt="icons_delete_document" /> <?php echo $_lang['delete']?></a></li>
-      <?php } ?>
-          <li id="Button4" class="transition"><a href="#" onclick="documentDirty=false;<?php echo $id==0 ? "document.location.href='index.php?a=2';" : "document.location.href='index.php?a=3&amp;id=$id".htmlspecialchars($add_path)."';"?>"><img alt="icons_cancel" src="<?php echo $_style["icons_cancel"] ?>" /> <?php echo $_lang['cancel']?></a></li>
-          <li id="Button5"><a href="#" onclick="window.open('<?php echo $modx->makeUrl($id); ?>','previeWin');"><img alt="icons_preview_resource" src="<?php echo $_style["icons_preview_resource"] ?>" /> <?php echo $_lang['preview']?></a></li>
-      </ul>
-</div>
-
-<!-- start main wrapper -->
-<div class="sectionBody">
-<script type="text/javascript" src="media/script/tabpane.js"></script>
-
-<div class="tab-pane" id="documentPane">
-    <script type="text/javascript">
-    tpSettings = new WebFXTabPane( document.getElementById( "documentPane" ), <?php echo $modx->config['remember_last_tab'] == 1 ? 'true' : 'false'; ?> );
-    </script>
-
-    <!-- General -->
-    <?php
-        $evtOut = $modx->invokeEvent('OnDocFormTemplateRender', array(
-            'id' => $id
-        ));
-        if (is_array($evtOut)) {
-            echo implode('', $evtOut);
-        } else {
-    ?>
-    <div class="tab-page" id="tabGeneral">
-        <h2 class="tab"><?php echo $_lang['settings_general']?></h2>
-        <script type="text/javascript">tpSettings.addTabPage( document.getElementById( "tabGeneral" ) );</script>
-
-        <table width="99%" border="0" cellspacing="5" cellpadding="0">
-            <tr style="height: 24px;"><td width="100" align="left"><span class="warning"><?php echo $_lang['resource_title']?></span></td>
-                <td><input name="pagetitle" type="text" maxlength="255" value="<?php echo $modx->htmlspecialchars(stripslashes($content['pagetitle']))?>" class="inputBox" onchange="documentDirty=true;" spellcheck="true" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_title_help']?>" onclick="alert(this.alt);" style="cursor:help;" />
-                <?php if(strpos($content['pagetitle'],'Duplicate of')!==false) echo '<script>document.getElementsByName("pagetitle")[0].focus();</script>'?></td></tr>
-            <tr style="height: 24px;"><td align="left"><span class="warning"><?php echo $_lang['long_title']?></span></td>
-                <td><input name="longtitle" type="text" maxlength="255" value="<?php echo $modx->htmlspecialchars(stripslashes($content['longtitle']))?>" class="inputBox" onchange="documentDirty=true;" spellcheck="true" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_long_title_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-            <tr style="height: 24px;"><td><span class="warning"><?php echo $_lang['resource_description']?></span></td>
-                <td><input name="description" type="text" maxlength="255" value="<?php echo $modx->htmlspecialchars(stripslashes($content['description']))?>" class="inputBox" onchange="documentDirty=true;" spellcheck="true" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_description_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-            <tr style="height: 24px;"><td><span class="warning"><?php echo $_lang['resource_alias']?></span></td>
-                <td><input name="alias" type="text" maxlength="100" value="<?php echo stripslashes($content['alias'])?>" class="inputBox" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_alias_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-            <tr style="height: 24px;"><td><span class="warning"><?php echo $_lang['link_attributes']?></span></td>
-                <td><input name="link_attributes" type="text" maxlength="255" value="<?php echo $modx->htmlspecialchars(stripslashes($content['link_attributes']))?>" class="inputBox" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['link_attributes_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-
-<?php if ($content['type'] == 'reference' || $_REQUEST['a'] == '72') { // Web Link specific ?>
-
-            <tr style="height: 24px;"><td><span class="warning"><?php echo $_lang['weblink']?></span> <img name="llock" src="<?php echo $_style["tree_folder"] ?>" alt="tree_folder" onclick="enableLinkSelection(!allowLinkSelection);" style="cursor:pointer;" /></td>
-                <td><input name="ta" type="text" maxlength="255" value="<?php echo !empty($content['content']) ? stripslashes($content['content']) : 'http://'; ?>" class="inputBox" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_weblink_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-
-<?php } ?>
-
-            <tr style="height: 24px;"><td valign="top" width="100" align="left"><span class="warning"><?php echo $_lang['resource_summary']?></span></td>
-                <td valign="top"><textarea id="introtext" name="introtext" class="inputBox" rows="3" cols="" onchange="documentDirty=true;"><?php echo $modx->htmlspecialchars(stripslashes($content['introtext']))?></textarea>
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_summary_help']?>" onclick="alert(this.alt);" style="cursor:help;" spellcheck="true"/></td></tr>
-            <tr style="height: 24px;"><td><span class="warning"><?php echo $_lang['page_data_template']?></span></td>
-                <td><select id="template" name="template" class="inputBox" onchange="templateWarning();">
-                    <option value="0">(blank)</option>
-<?php
-                $field = "t.templatename, t.selectable, t.id, c.category";
-                $from  = "{$tbl_site_templates} AS t LEFT JOIN {$tbl_categories} AS c ON t.category = c.id";
-                $rs = $modx->db->select($field,$from,'','c.category, t.templatename ASC');
-                $currentCategory = '';
-                while ($row = $modx->db->getRow($rs)) {
-                    if($row['selectable'] != 1 && $row['id'] != $content['template']) { continue; };
-                    // Skip if not selectable but show if selected!
-                    $thisCategory = $row['category'];
-                    if($thisCategory == null) {
-                        $thisCategory = $_lang["no_category"];
-                    }
-                    if($thisCategory != $currentCategory) {
-                        if($closeOptGroup) {
-                            echo "\t\t\t\t\t</optgroup>\n";
-                        }
-                        echo "\t\t\t\t\t<optgroup label=\"$thisCategory\">\n";
-                        $closeOptGroup = true;
-                    }
-                    
-                    $selectedtext = ($row['id'] == $content['template']) ? ' selected="selected"' : '';
-                    
-                    echo "\t\t\t\t\t".'<option value="'.$row['id'].'"'.$selectedtext.'>'.$row['templatename']."</option>\n";
-                    $currentCategory = $thisCategory;
-                }
-                if($thisCategory != '') {
-                    echo "\t\t\t\t\t</optgroup>\n";
-                }
-?>
-                </select> &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['page_data_template_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-            <tr style="height: 24px;"><td align="left" style="width:100px;"><span class="warning"><?php echo $_lang['resource_opt_menu_title']?></span></td>
-                <td><input name="menutitle" type="text" maxlength="255" value="<?php echo $modx->htmlspecialchars(stripslashes($content['menutitle']))?>" class="inputBox" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_menu_title_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-            <tr style="height: 24px;"><td align="left" style="width:100px;"><span class="warning"><?php echo $_lang['resource_opt_menu_index']?></span></td>
-                <td>
-                    <input name="menuindex" type="text" maxlength="6" value="<?php echo $content['menuindex']?>" class="inputBox" style="width:30px;" onchange="documentDirty=true;" /><input type="button" value="&lt;" onclick="var elm = document.mutate.menuindex;var v=parseInt(elm.value+'')-1;elm.value=v>0? v:0;elm.focus();documentDirty=true;" /><input type="button" value="&gt;" onclick="var elm = document.mutate.menuindex;var v=parseInt(elm.value+'')+1;elm.value=v>0? v:0;elm.focus();documentDirty=true;" />
-                    &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_menu_index_help']?>" onclick="alert(this.alt);" style="cursor:help;" />
-                    </td>
-                </tr>
-            <tr style="height: 24px;">
-              <td align="left" style="width:100px;"><span class="warning"><?php echo $_lang['resource_opt_show_menu']?></span></td>
-                <td><input name="hidemenucheck" type="checkbox" class="checkbox" <?php echo $content['hidemenu']!=1 ? 'checked="checked"':''?> onclick="changestate(document.mutate.hidemenu);" /><input type="hidden" name="hidemenu" class="hidden" value="<?php echo ($content['hidemenu']==1) ? 1 : 0?>" />
-                    &nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_show_menu_help']?>" onclick="alert(this.alt);" style="cursor:help;" />
-                    </td>
-                </tr>
-
-            <tr><td colspan="2"><div class="split"></div></td></tr>
-
-            <tr style="height: 24px;"><td valign="top"><span class="warning"><?php echo $_lang['resource_parent']?></span></td>
-                <td valign="top">
-                <?php
-                $parentlookup = false;
-                if (isset ($_REQUEST['id'])) {
-                    if ($content['parent'] == 0) {
-                        $parentname = $site_name;
-                    } else {
-                        $parentlookup = $content['parent'];
-                    }
-                } elseif (isset ($_REQUEST['pid'])) {
-                    if ($_REQUEST['pid'] == 0) {
-                        $parentname = $site_name;
-                    } else {
-                        $parentlookup = $_REQUEST['pid'];
-                    }
-                } elseif (isset($_POST['parent'])) {
-                    if ($_POST['parent'] == 0) {
-                        $parentname = $site_name;
-                    } else {
-                        $parentlookup = $_POST['parent'];
-                    }
-                } else {
-                    $parentname = $site_name;
-                    $content['parent'] = 0;
-                }
-                if($parentlookup !== false && is_numeric($parentlookup)) {
-                    $rs = $modx->db->select('pagetitle', $tbl_site_content, "id='{$parentlookup}'");
-                    $parentname = $modx->db->getValue($rs);
-                    if (!$parentname) {
-                        $modx->webAlertAndQuit($_lang["error_no_parent"]);
-                    }
-                }
-                ?>&nbsp;<img alt="tree_folder" name="plock" src="<?php echo $_style["tree_folder"] ?>" onclick="enableParentSelection(!allowParentSelection);" style="cursor:pointer;" /> <b><span id="parentName"><?php echo isset($_REQUEST['pid']) ? $_REQUEST['pid'] : $content['parent']?> (<?php echo $parentname?>)</span></b>
-    &nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_parent_help']?>" onclick="alert(this.alt);" style="cursor:help;" />
-                <input type="hidden" name="parent" value="<?php echo isset($_REQUEST['pid']) ? $_REQUEST['pid'] : $content['parent']?>" onchange="documentDirty=true;" />
-                </td></tr>
-        </table>
-
-<?php if ($content['type'] == 'document' || $_REQUEST['a'] == '4') { ?>
-        <!-- Content -->
-            <div class="sectionHeader" id="content_header"><?php echo $_lang['resource_content']?></div>
-            <div class="sectionBody" id="content_body">
-<?php
-            if (($content['richtext'] == 1 || $_REQUEST['a'] == '4') && $use_editor == 1) {
-                $htmlContent = $content['content'];
-?>
-                <div style="width:100%">
-                    <textarea id="ta" name="ta" style="width:100%; height: 400px;" onchange="documentDirty=true;"><?php echo $modx->htmlspecialchars($htmlContent)?></textarea>
-                    <span class="warning"><?php echo $_lang['which_editor_title']?></span>
-
-                    <select id="which_editor" name="which_editor" onchange="changeRTE();">
-                        <option value="none"><?php echo $_lang['none']?></option>
-<?php
-                        // invoke OnRichTextEditorRegister event
-                        $evtOut = $modx->invokeEvent("OnRichTextEditorRegister");
-                        if (is_array($evtOut)) {
-                            for ($i = 0; $i < count($evtOut); $i++) {
-                                $editor = $evtOut[$i];
-                                echo "\t\t\t",'<option value="',$editor,'"',($modx->config['which_editor'] == $editor ? ' selected="selected"' : ''),'>',$editor,"</option>\n";
-                            }
-                        }
-?>
-                        </select>
-                </div>
-<?php
-                // Richtext-[*content*]
-                $richtexteditorIds = array();
-                $richtexteditorOptions = array();
-                $richtexteditorIds[$modx->config['which_editor']][] = 'ta';
-                $richtexteditorOptions[$modx->config['which_editor']]['ta'] = '';
-            } else {
-                echo "\t".'<div style="width:100%"><textarea class="phptextarea" id="ta" name="ta" style="width:100%; height: 400px;" onchange="documentDirty=true;">',$modx->htmlspecialchars($content['content']),'</textarea></div>'."\n";
-            }
-?>
-            </div><!-- end .sectionBody -->
-<?php } ?>
-
-<?php if (($content['type'] == 'document' || $_REQUEST['a'] == '4') || ($content['type'] == 'reference' || $_REQUEST['a'] == 72)) { ?>
-        <!-- Template Variables -->
-            <div class="sectionHeader" id="tv_header"><?php echo $_lang['settings_templvars']?></div>
-            <div class="sectionBody tmplvars" id="tv_body">
-<?php
-                $template = $default_template;
-                if (isset ($_REQUEST['newtemplate'])) {
-                    $template = $_REQUEST['newtemplate'];
-                } else {
-                    if (isset ($content['template']))
-                        $template = $content['template'];
-                }
-
-                $field = "DISTINCT tv.*, IF(tvc.value!='',tvc.value,tv.default_text) as value, tvtpl.rank as tvrank";
-                $vs = array($tbl_site_tmplvars, $tbl_site_tmplvar_templates, $tbl_site_tmplvar_contentvalues, $id, $tbl_site_tmplvar_access);
-                $from = vsprintf("%s AS tv INNER JOIN %s AS tvtpl ON tvtpl.tmplvarid = tv.id
-                         LEFT JOIN %s AS tvc ON tvc.tmplvarid=tv.id AND tvc.contentid='%s'
-                         LEFT JOIN %s AS tva ON tva.tmplvarid=tv.id", $vs);
-                $dgs = $docgrp ? " OR tva.documentgroup IN ({$docgrp})" : '';
-                $vs = array($template, $_SESSION['mgrRole'], $dgs);
-                $where = vsprintf("tvtpl.templateid='%s' AND (1='%s' OR ISNULL(tva.documentgroup) %s)", $vs);
-                $rs = $modx->db->select($field,$from,$where,'tvtpl.rank,tv.rank, tv.id');
-                $limit = $modx->db->getRecordCount($rs);
-                if ($limit > 0) {
-                	$tvsArray = $modx->db->makeArray($rs,'name');
-                    echo "\t".'<table style="position:relative;" border="0" cellspacing="0" cellpadding="3" width="96%">'."\n";
-                    require_once(MODX_MANAGER_PATH.'includes/tmplvars.inc.php');
-                    require_once(MODX_MANAGER_PATH.'includes/tmplvars.commands.inc.php');
-                    $i = 0;
-                    foreach ($tvsArray as $row) {
-                        // Go through and display all Template Variables
-                        if ($row['type'] == 'richtext' || $row['type'] == 'htmlarea') {
-                            // determine TV-options
-                            $tvOptions = $modx->parseProperties($row['elements']);
-                            if(!empty($tvOptions)) {
-                                // Allow different Editor with TV-option {"editor":"CKEditor4"} or &editor=Editor;text;CKEditor4
-                                $editor = isset($tvOptions['editor']) ? $tvOptions['editor']: $modx->config['which_editor'];
-                            };
-                            // Add richtext editor to the list
-                            $richtexteditorIds[$editor][] = "tv".$row['id'];
-                            $richtexteditorOptions[$editor]["tv".$row['id']] = $tvOptions;
-                        }
-                        // splitter
-                        if ($i++ > 0)
-                            echo "\t\t",'<tr><td colspan="2"><div class="split"></div></td></tr>',"\n";
-
-                        // post back value
-                        if(array_key_exists('tv'.$row['id'], $_POST)) {
-                            if(is_array($_POST['tv'.$row['id']])) {
-                                $tvPBV = implode('||', $_POST['tv'.$row['id']]);
-                            } else {
-                                $tvPBV = $_POST['tv'.$row['id']];
-                            }
-                        } else {
-                            $tvPBV = $row['value'];
-                        }
-						
-						$tvDescription = (!empty($row['description'])) ? '<br /><span class="comment">' . $row['description'] . '</span>' : '';
-						$tvInherited = (substr($tvPBV, 0, 8) == '@INHERIT') ? '<br /><span class="comment inherited">(' . $_lang['tmplvars_inherited'] . ')</span>' : '';
-						$tvName = $modx->hasPermission('edit_template') ? '<br/><small class="protectedNode">[*'.$row['name'].'*]</small>' : '';
-						
-                        echo "\t\t",'<tr style="height: 24px;"><td align="left" valign="top" width="150"><span class="warning">',$row['caption'].$tvName,"</span>\n",
-                             "\t\t\t",$tvDescription,$tvInherited,"</td>\n",
-                             "\t\t\t",'<td valign="top" style="position:relative;',($row['type'] == 'date' ? '' : ''),'">',"\n",
-                             "\t\t\t",renderFormElement($row['type'], $row['id'], $row['default_text'], $row['elements'], $tvPBV, '', $row, $tvsArray),"\n",
-                             "\t\t</td></tr>\n";
-                    }
-                    echo "\t</table>\n";
-                } else {
-                    // There aren't any Template Variables
-                    echo "\t<p>".$_lang['tmplvars_novars']."</p>\n";
-                }
-            ?>
-            </div>
-            <!-- end .sectionBody .tmplvars -->
-        <?php } ?>
-
-    </div><!-- end #tabGeneral -->
-
-    <!-- Settings -->
-    <div class="tab-page" id="tabSettings">
-        <h2 class="tab"><?php echo $_lang['settings_page_settings']?></h2>
-        <script type="text/javascript">tpSettings.addTabPage( document.getElementById( "tabSettings" ) );</script>
-
-        <table width="99%" border="0" cellspacing="5" cellpadding="0">
-
-        <?php $mx_can_pub = $modx->hasPermission('publish_document') ? '' : 'disabled="disabled" '; ?>
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['resource_opt_published']?></span></td>
-                <td><input <?php echo $mx_can_pub ?>name="publishedcheck" type="checkbox" class="checkbox" <?php echo (isset($content['published']) && $content['published']==1) || (!isset($content['published']) && $publish_default==1) ? "checked" : ''?> onclick="changestate(document.mutate.published);" />
-                <input type="hidden" name="published" value="<?php echo (isset($content['published']) && $content['published']==1) || (!isset($content['published']) && $publish_default==1) ? 1 : 0?>" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_published_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td>
-            </tr>
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['page_data_publishdate']?></span></td>
-                <td><input id="pub_date" <?php echo $mx_can_pub ?>name="pub_date" class="DatePicker" value="<?php echo $content['pub_date']=="0" || !isset($content['pub_date']) ? '' : $modx->toDateFormat($content['pub_date'])?>" onblur="documentDirty=true;" />
-                <a href="javascript:void(0);" onclick="javascript:document.mutate.pub_date.value=''; return true;" onmouseover="window.status='<?php echo $_lang['remove_date']?>'; return true;" onmouseout="window.status=''; return true;" style="cursor:pointer; cursor:hand;">
-                <img src="<?php echo $_style["icons_cal_nodate"] ?>" width="16" height="16" border="0" alt="<?php echo $_lang['remove_date']?>" /></a>
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['page_data_publishdate_help']?>" onclick="alert(this.alt);" style="cursor:help;" />
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td style="color: #555;font-size:10px"><em> <?php echo $modx->config['datetime_format']; ?> HH:MM:SS</em></td>
-            </tr>
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['page_data_unpublishdate']?></span></td>
-                <td><input id="unpub_date" <?php echo $mx_can_pub ?>name="unpub_date" class="DatePicker" value="<?php echo $content['unpub_date']=="0" || !isset($content['unpub_date']) ? '' : $modx->toDateFormat($content['unpub_date'])?>" onblur="documentDirty=true;" />
-                <a onclick="document.mutate.unpub_date.value=''; return true;" onmouseover="window.status='<?php echo $_lang['remove_date']?>'; return true;" onmouseout="window.status=''; return true;" style="cursor:pointer; cursor:hand">
-                <img src="<?php echo $_style["icons_cal_nodate"] ?>" width="16" height="16" border="0" alt="<?php echo $_lang['remove_date']?>" /></a>
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['page_data_unpublishdate_help']?>" onclick="alert(this.alt);" style="cursor:help;" />
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td style="color: #555;font-size:10px"><em> <?php echo $modx->config['datetime_format']; ?> HH:MM:SS</em></td>
-            </tr>
-            <tr>
-              <td colspan="2"><div class='split'></div></td>
-            </tr>
-
-<?php
-
-if ($_SESSION['mgrRole'] == 1 || $_REQUEST['a'] != '27' || $_SESSION['mgrInternalKey'] == $content['createdby'] || $modx->hasPermission('change_resourcetype')) {
-?>
-            <tr style="height: 24px;"><td width="150"><span class="warning"><?php echo $_lang['resource_type']?></span></td>
-                <td><select name="type" class="inputBox" onchange="documentDirty=true;" style="width:200px">
-
-                    <option value="document"<?php echo (($content['type'] == "document" || $_REQUEST['a'] == '85' || $_REQUEST['a'] == '4') ? ' selected="selected"' : "");?> ><?php echo $_lang["resource_type_webpage"];?></option>
-                    <option value="reference"<?php echo (($content['type'] == "reference" || $_REQUEST['a'] == '72') ? ' selected="selected"' : "");?> ><?php echo $_lang["resource_type_weblink"];?></option>
-                    </select>
-                    &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_type_message']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-
-            <tr style="height: 24px;"><td width="150"><span class="warning"><?php echo $_lang['page_data_contentType']?></span></td>
-                <td><select name="contentType" class="inputBox" onchange="documentDirty=true;" style="width:200px">
-            <?php
-                if (!$content['contentType'])
-                    $content['contentType'] = 'text/html';
-                $custom_contenttype = (isset ($custom_contenttype) ? $custom_contenttype : "text/html,text/plain,text/xml");
-                $ct = explode(",", $custom_contenttype);
-                for ($i = 0; $i < count($ct); $i++) {
-                    echo "\t\t\t\t\t".'<option value="'.$ct[$i].'"'.($content['contentType'] == $ct[$i] ? ' selected="selected"' : '').'>'.$ct[$i]."</option>\n";
-                }
-            ?>
-                </select>
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['page_data_contentType_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-            <tr style="height: 24px;"><td width="150"><span class="warning"><?php echo $_lang['resource_opt_contentdispo']?></span></td>
-                <td><select name="content_dispo" size="1" onchange="documentDirty=true;" style="width:200px">
-                    <option value="0"<?php echo !$content['content_dispo'] ? ' selected="selected"':''?>><?php echo $_lang['inline']?></option>
-                    <option value="1"<?php echo $content['content_dispo']==1 ? ' selected="selected"':''?>><?php echo $_lang['attachment']?></option>
-                </select>
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_contentdispo_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td></tr>
-
-            <tr>
-              <td colspan="2"><div class='split'></div></td>
-            </tr>
-<?php
-} else {
-    if ($content['type'] != 'reference' && $_REQUEST['a'] != '72') {
-        // non-admin managers creating or editing a document resource
-?>
-            <input type="hidden" name="contentType" value="<?php echo isset($content['contentType']) ? $content['contentType'] : "text/html"?>" />
-            <input type="hidden" name="type" value="document" />
-            <input type="hidden" name="content_dispo" value="<?php echo isset($content['content_dispo']) ? $content['content_dispo'] : '0'?>" />
-<?php
-    } else {
-        // non-admin managers creating or editing a reference (weblink) resource
-?>
-            <input type="hidden" name="type" value="reference" />
-            <input type="hidden" name="contentType" value="text/html" />
-<?php
-    }
-}//if mgrRole
-?>
-
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['resource_opt_folder']?></span></td>
-                <td><input name="isfoldercheck" type="checkbox" class="checkbox" <?php echo ($content['isfolder']==1||$_REQUEST['a']=='85') ? "checked" : ''?> onclick="changestate(document.mutate.isfolder);" />
-                <input type="hidden" name="isfolder" value="<?php echo ($content['isfolder']==1||$_REQUEST['a']=='85') ? 1 : 0?>" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_folder_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td>
-            </tr>
-
-<tr style="height: 24px;">
-<td width="150"><span class="warning">
-<?php echo $_lang['resource_opt_alvisibled']?>
-</span></td>
-<td>
-<input name="alias_visible_check" type="checkbox" class="checkbox" <?php echo (!isset($content['alias_visible'])|| $content['alias_visible']==1) ? "checked" : ''?> onclick="changestate(document.mutate.alias_visible);" /> 
-<input type="hidden" name="alias_visible" value="<?php echo (!isset($content['alias_visible']) || $content['alias_visible']==1) ? 1 : 0?>" />   <img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_alvisibled_help']?>" onclick="alert(this.alt);" style="cursor:help;" />
-</td></tr>
-
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['resource_opt_richtext']?></span></td>
-                <td><input name="richtextcheck" type="checkbox" class="checkbox" <?php echo $content['richtext']==0 && $_REQUEST['a']=='27' ? '' : "checked"?> onclick="changestate(document.mutate.richtext);" />
-                <input type="hidden" name="richtext" value="<?php echo $content['richtext']==0 && $_REQUEST['a']=='27' ? 0 : 1?>" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_richtext_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td>
-            </tr>
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['track_visitors_title']?></span></td>
-                <td><input name="donthitcheck" type="checkbox" class="checkbox" <?php echo ($content['donthit']!=1) ? 'checked="checked"' : ''?> onclick="changestate(document.mutate.donthit);" /><input type="hidden" name="donthit" value="<?php echo ($content['donthit']==1) ? 1 : 0?>" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_trackvisit_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td>
-            </tr>
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['page_data_searchable']?></span></td>
-                <td><input name="searchablecheck" type="checkbox" class="checkbox" <?php echo (isset($content['searchable']) && $content['searchable']==1) || (!isset($content['searchable']) && $search_default==1) ? "checked" : ''?> onclick="changestate(document.mutate.searchable);" /><input type="hidden" name="searchable" value="<?php echo (isset($content['searchable']) && $content['searchable']==1) || (!isset($content['searchable']) && $search_default==1) ? 1 : 0?>" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['page_data_searchable_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td>
-            </tr>
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['page_data_cacheable']?></span></td>
-                <td><input name="cacheablecheck" type="checkbox" class="checkbox" <?php echo (isset($content['cacheable']) && $content['cacheable']==1) || (!isset($content['cacheable']) && $cache_default==1) ? "checked" : ''?> onclick="changestate(document.mutate.cacheable);" />
-                <input type="hidden" name="cacheable" value="<?php echo (isset($content['cacheable']) && $content['cacheable']==1) || (!isset($content['cacheable']) && $cache_default==1) ? 1 : 0?>" onchange="documentDirty=true;" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['page_data_cacheable_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td>
-            </tr>
-            <tr style="height: 24px;">
-                <td width="150"><span class="warning"><?php echo $_lang['resource_opt_emptycache']?></span></td>
-                <td><input name="syncsitecheck" type="checkbox" class="checkbox" checked="checked" onclick="changestate(document.mutate.syncsite);" />
-                <input type="hidden" name="syncsite" value="1" />
-                &nbsp;&nbsp;<img src="<?php echo $_style["icons_tooltip_over"]?>" onmouseover="this.src='<?php echo $_style["icons_tooltip"]?>';" onmouseout="this.src='<?php echo $_style["icons_tooltip_over"]?>';" alt="<?php echo $_lang['resource_opt_emptycache_help']?>" onclick="alert(this.alt);" style="cursor:help;" /></td>
-            </tr>
-        </table>
-    </div><!-- end #tabSettings -->
-    <?php } ?>
-
-<?php if ($modx->hasPermission('edit_doc_metatags') && $modx->config['show_meta']) {
-    // get list of site keywords
-    $keywords = array();
-    $ds = $modx->db->select('id, keyword', $tbl_site_keywords, '', 'keyword ASC');
-        while ($row = $modx->db->getRow($ds)) {
-            $keywords[$row['id']] = $row['keyword'];
-        }
-    // get selected keywords using document's id
-    if (isset ($content['id']) && count($keywords) > 0) {
-        $keywords_selected = array();
-        $ds = $modx->db->select('keyword_id', $tbl_keyword_xref, "content_id='{$content['id']}'");
-            while ($row = $modx->db->getRow($ds)) {
-                $keywords_selected[$row['keyword_id']] = ' selected="selected"';
-            }
-    }
-
-    // get list of site META tags
-    $metatags = array();
-    $ds = $modx->db->select('id, name', $tbl_site_metatags);
-        while ($row = $modx->db->getRow($ds)) {
-            $metatags[$row['id']] = $row['name'];
-        }
-    // get selected META tags using document's id
-    if (isset ($content['id']) && count($metatags) > 0) {
-        $metatags_selected = array();
-        $ds = $modx->db->select('metatag_id', $tbl_site_content_metatags, "content_id='{$content['id']}'");
-            while ($row = $modx->db->getRow($ds)) {
-                $metatags_selected[$row['metatag_id']] = ' selected="selected"';
-            }
-    }
-    ?>
-    <!-- META Keywords -->
-    <div class="tab-page" id="tabMeta">
-        <h2 class="tab"><?php echo $_lang['meta_keywords']?></h2>
-        <script type="text/javascript">tpSettings.addTabPage( document.getElementById( "tabMeta" ) );</script>
-
-        <table width="99%" border="0" cellspacing="5" cellpadding="0">
-        <tr style="height: 24px;"><td><?php echo $_lang['resource_metatag_help']?><br /><br />
-            <table border="0" style="width:inherit;"><tr>
-            <td><span class="warning"><?php echo $_lang['keywords']?></span><br />
-                <select name="keywords[]" multiple="multiple" size="16" class="inputBox" style="width: 200px;" onchange="documentDirty=true;">
-                <?php
-                    foreach ($keywords as $key=>$value) {
-                        $selected = $keywords_selected[$key];
-                        echo "\t\t\t\t".'<option value="'.$key.'"'.$selected.'>'.$value."</option>\n";
-                    }
-                ?>
-                </select>
-                <br />
-                <input type="button" value="<?php echo $_lang['deselect_keywords']?>" onclick="clearKeywordSelection();" />
-            </td>
-            <td><span class="warning"><?php echo $_lang['metatags']?></span><br />
-                <select name="metatags[]" multiple="multiple" size="16" class="inputBox" style="width: 220px;" onchange="documentDirty=true;">
-                <?php
-                    foreach ($metatags as $key=>$value) {
-                        $selected = $metatags_selected[$key];
-                        echo "\t\t\t\t".'<option value="'.$key.'"'.$selected.'>'.$value."</option>\n";
-                    }
-                ?>
-                </select>
-                <br />
-                <input type="button" value="<?php echo $_lang['deselect_metatags']?>" onclick="clearMetatagSelection();" />
-            </td>
-            </table>
-            </td>
-        </tr>
-        </table>
-    </div><!-- end #tabMeta -->
-<?php
+			}
+		}
+	}
+	$out .= '<li class="breadcrumbs__li breadcrumbs__li_current">' . $title . '</li>';
+	
+	$tpe->setElement('raw', 'mutate.breadcrumbs', array('content'=>'<ul class="breadcrumbs">' . $out . '</ul>'));
 }
 
-/*******************************
- * Document Access Permissions */
-if ($use_udperms == 1) {
-    $groupsarray = array();
-    $sql = '';
+$tpe->setElement('tabpane',	'mutate.documentPane', array('label'=>$_lang['change_password']));
 
-    $documentId = ($_REQUEST['a'] == '27' ? $id : (!empty($_REQUEST['pid']) ? $_REQUEST['pid'] : $content['parent']));
-    if ($documentId > 0) {
-        // Load up, the permissions from the parent (if new document) or existing document
-        $rs = $modx->db->select('id, document_group', $tbl_document_groups, "document='{$documentId}'");
-        while ($currentgroup = $modx->db->getRow($rs))
-            $groupsarray[] = $currentgroup['document_group'].','.$currentgroup['id'];
-
-        // Load up the current permissions and names
-        $vs = array($tbl_document_group_names, $tbl_document_groups, $documentId);
-        $from = vsprintf("%s AS dgn LEFT JOIN %s AS groups ON groups.document_group=dgn.id AND groups.document='%s'",$vs);
-    	$rs = $modx->db->select('dgn.*, groups.id AS link_id',$from,'','name');
-    } else {
-        // Just load up the names, we're starting clean
-        $rs = $modx->db->select('*, NULL AS link_id', $tbl_document_group_names, '', 'name');
-    }
-
-    // retain selected doc groups between post
-    if (isset($_POST['docgroups']))
-        $groupsarray = array_merge($groupsarray, $_POST['docgroups']);
-
-    $isManager = $modx->hasPermission('access_permissions');
-    $isWeb     = $modx->hasPermission('web_access_permissions');
-
-    // Setup Basic attributes for each Input box
-    $inputAttributes = array(
-        'type' => 'checkbox',
-        'class' => 'checkbox',
-        'name' => 'docgroups[]',
-        'onclick' => 'makePublic(false);',
-    );
-    $permissions = array(); // New Permissions array list (this contains the HTML)
-    $permissions_yes = 0; // count permissions the current mgr user has
-    $permissions_no = 0; // count permissions the current mgr user doesn't have
-
-    // Loop through the permissions list
-    while ($row = $modx->db->getRow($rs)) {
-
-        // Create an inputValue pair (group ID and group link (if it exists))
-        $inputValue = $row['id'].','.($row['link_id'] ? $row['link_id'] : 'new');
-        $inputId    = 'group-'.$row['id'];
-
-        $checked    = in_array($inputValue, $groupsarray);
-        if ($checked) $notPublic = true; // Mark as private access (either web or manager)
-
-        // Skip the access permission if the user doesn't have access...
-        if ((!$isManager && $row['private_memgroup'] == '1') || (!$isWeb && $row['private_webgroup'] == '1'))
-            continue;
-
-        // Setup attributes for this Input box
-        $inputAttributes['id']    = $inputId;
-        $inputAttributes['value'] = $inputValue;
-        if ($checked)
-                $inputAttributes['checked'] = 'checked';
-        else    unset($inputAttributes['checked']);
-
-        // Create attribute string list
-        $inputString = array();
-        foreach ($inputAttributes as $k => $v) $inputString[] = $k.'="'.$v.'"';
-
-        // Make the <input> HTML
-        $inputHTML = '<input '.implode(' ', $inputString).' />';
-
-        // does user have this permission?
-        $from = "{$tbl_membergroup_access} AS mga, {$tbl_member_groups} AS mg";
-        $vs = array($row['id'], $_SESSION['mgrInternalKey']);
-        $where = vsprintf("mga.membergroup=mg.user_group AND mga.documentgroup=%s AND mg.member=%s", $vs);
-        $rsp = $modx->db->select('COUNT(mg.id)',$from,$where);
-        $count = $modx->db->getValue($rsp);
-        if($count > 0) {
-            ++$permissions_yes;
-        } else {
-            ++$permissions_no;
-        }
-        $permissions[] = "\t\t".'<li>'.$inputHTML.'<label for="'.$inputId.'">'.$row['name'].'</label></li>';
-    }
-    // if mgr user doesn't have access to any of the displayable permissions, forget about them and make doc public
-    if($_SESSION['mgrRole'] != 1 && ($permissions_yes == 0 && $permissions_no > 0)) {
-        $permissions = array();
-    }
-
-    // See if the Access Permissions section is worth displaying...
-    if (!empty($permissions)) {
-        // Add the "All Document Groups" item if we have rights in both contexts
-        if ($isManager && $isWeb)
-            array_unshift($permissions,"\t\t".'<li><input type="checkbox" class="checkbox" name="chkalldocs" id="groupall"'.(!$notPublic ? ' checked="checked"' : '').' onclick="makePublic(true);" /><label for="groupall" class="warning">' . $_lang['all_doc_groups'] . '</label></li>');
-        // Output the permissions list...
-?>
-<!-- Access Permissions -->
-<div class="tab-page" id="tabAccess">
-    <h2 class="tab" id="tab_access_header"><?php echo $_lang['access_permissions']?></h2>
-    <script type="text/javascript">tpSettings.addTabPage( document.getElementById( "tabAccess" ) );</script>
-    <script type="text/javascript">
-        /* <![CDATA[ */
-        function makePublic(b) {
-            var notPublic = false;
-            var f = document.forms['mutate'];
-            var chkpub = f['chkalldocs'];
-            var chks = f['docgroups[]'];
-            if (!chks && chkpub) {
-                chkpub.checked=true;
-                return false;
-            } else if (!b && chkpub) {
-                if (!chks.length) notPublic = chks.checked;
-                else for (i = 0; i < chks.length; i++) if (chks[i].checked) notPublic = true;
-                chkpub.checked = !notPublic;
-            } else {
-                if (!chks.length) chks.checked = (b) ? false : chks.checked;
-                else for (i = 0; i < chks.length; i++) if (b) chks[i].checked = false;
-                chkpub.checked = true;
-            }
-        }
-        /* ]]> */
-    </script>
-    <p><?php echo $_lang['access_permissions_docs_message']?></p>
-    <ul>
-    <?php echo implode("\n", $permissions)."\n"; ?>
-    </ul>
-</div><!--div class="tab-page" id="tabAccess"-->
-<?php
-    } // !empty($permissions)
-    elseif($_SESSION['mgrRole'] != 1 && ($permissions_yes == 0 && $permissions_no > 0) && ($_SESSION['mgrPermissions']['access_permissions'] == 1 || $_SESSION['mgrPermissions']['web_access_permissions'] == 1)) {
-?>
-    <p><?php echo $_lang["access_permissions_docs_collision"];?></p>
-<?php
-
-    }
-}
-/* End Document Access Permissions *
- ***********************************/
-?>
-
-<input type="submit" name="save" style="display:none" />
-<?php
-
-// invoke OnDocFormRender event
-$evtOut = $modx->invokeEvent('OnDocFormRender', array(
-	'id' => $id,
-	'template' => $content['template']
+$evtOut = $modx->invokeEvent('OnDocFormTemplateRender', array(
+	'id' => $id
 ));
 
-if (is_array($evtOut)) echo implode('', $evtOut);
+if (is_array($evtOut)) $tpe->setElement('raw', 'mutate.documentPane.OnDocFormTemplateRender', array('content'=>implode('', $evtOut)));
+else {
+// $tpe->setElement('section', 'section1', 'mutate.documentPane.tab1', array('label' => $_lang['change_password']));
+$tpe->setElement('tab',           'mutate.documentPane.tabGeneral', 	                 array('label'=>$_lang['settings_general']));
+$tpe->setElement('section.blank', 'mutate.documentPane.tabGeneral.section1',             array(), array() );
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.pagetitle',   array('name'=>'pagetitle', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+                                                                                              'label'=>$_lang['resource_title'], 
+                                                                                              'help'=>$_lang['resource_title_help'], 
+                                                                                              'value'=>$modx->htmlspecialchars(stripslashes($content['pagetitle']))),
+	// Special tpe-param 'append' to append HTML-code after the rendered element (in this case after <input>)
+	array('append'=>strpos($content['pagetitle'],'Duplicate of')!==false ? '<script>document.getElementsByName("pagetitle")[0].focus();</script>' : ''));
+	
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.longtitle',   array('name'=>'longtitle', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+                                                                                             'label'=>$_lang['long_title'],
+                                                                                             'help'=>$_lang['resource_long_title_help'],
+                                                                                             'value'=>$modx->htmlspecialchars(stripslashes($content['longtitle']))));
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.description', array('name'=>'description', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+                                                                                             'label'=>$_lang['resource_description'],
+                                                                                             'help'=>$_lang['resource_description_help'],
+                                                                                             'value'=>$modx->htmlspecialchars(stripslashes($content['description']))));
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.alias',       array('name'=>'alias', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="100" spellcheck="true"',
+                                                                                             'label'=>$_lang['resource_alias'],
+                                                                                             'help'=>$_lang['resource_alias_help'],
+                                                                                             'value'=>$modx->htmlspecialchars(stripslashes($content['alias']))));
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.link_attributes', array('name'=>'link_attributes', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+                                                                                             'label'=>$_lang['link_attributes'],
+                                                                                             'help'=>$_lang['link_attributes_help'],
+                                                                                             'value'=>$modx->htmlspecialchars(stripslashes($content['link_attributes']))));
+// Web Link specific
+if ($content['type'] == 'reference' || $_REQUEST['a'] == '72') {
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.ta',          array('name'=>'ta', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+                                                                                               'label'=>$_lang['weblink'],
+                                                                                               'outsideLabel'=>'<img name="llock" src="'.$_style["tree_folder"].'" alt="tree_folder" onclick="enableLinkSelection(!allowLinkSelection);" style="cursor:pointer;" />',
+                                                                                               'help'=>$_lang['resource_weblink_help'],
+                                                                                               'value'=>!empty($content['content']) ? stripslashes($content['content']) : 'http://'));
+}
+
+$tpe->setElement('input.textarea','mutate.documentPane.tabGeneral.section1.introtext',   array('name'=>'introtext', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'rows'=>3, 'cols'=>'',
+                                                                                               'label'=>$_lang['resource_summary'],
+                                                                                               'help'=>$_lang['resource_summary_help'],
+                                                                                               'value'=>$modx->htmlspecialchars(stripslashes($content['introtext']))));
+
+// Template Select-Box
+$tpe->setElement('input.select','mutate.documentPane.tabGeneral.section1.template',      array('name'=>'template', 'class'=>'inputBox', 'onchange'=>'templateWarning();',
+	                                                                                           'label'=>$_lang['page_data_template'],
+	                                                                                           'help'=>$_lang['page_data_template_help']));
+// Set option "(blank)"
+$tpe->setElement('select.option',  'mutate.documentPane.tabGeneral.section1.template.opt0',array('label'=>'(blank)', 'value'=>'0'));
+
+// Add Select-Options in optgroups
+$field = "t.templatename, t.selectable, t.id, c.category";
+$from  = "{$tbl_site_templates} AS t LEFT JOIN {$tbl_categories} AS c ON t.category = c.id";
+$rs = $modx->db->select($field,$from,'','c.category, t.templatename ASC');
+$currentCategory = '';
+$groupIter = 0;
+$optIter = 0;
+while ($row = $modx->db->getRow($rs)) {
+	// Skip if not selectable but show if selected!
+	if($row['selectable'] != 1 && $row['id'] != $content['template']) { continue; };
+	
+	$thisCategory = $row['category'];
+	if($thisCategory == null) {
+		$thisCategory = $_lang["no_category"];
+	}
+	if($thisCategory != $currentCategory) {
+		$groupIter++;
+		$optIter = 0;
+		$tpe->setElement('select.optgroup','mutate.documentPane.tabGeneral.section1.template.optgroup'.$groupIter, array('label'=>$thisCategory));
+	}
+
+	$selected = ($row['id'] == $content['template']) ? ' selected="selected"' : '';
+	
+	$optIter++;
+	$tpe->setElement('select.option',  'mutate.documentPane.tabGeneral.section1.template.optgroup'.$groupIter.'.opt'.$optIter, array('label'=>$row['templatename'], 'value'=>$row['id'], 'selected'=>$selected));
+	
+	$currentCategory = $thisCategory;
+}
+// Template Select-Box END
+
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.menutitle',       array('name'=>'menutitle', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+                                                                                             'label'=>$_lang['resource_opt_menu_title'],
+                                                                                             'help'=>$_lang['resource_opt_menu_title_help'],
+                                                                                             'value'=>$modx->htmlspecialchars(stripslashes($content['menutitle']))));
+$tpe->setElement('input.number',  'mutate.documentPane.tabGeneral.section1.menuindex',       array('name'=>'menuindex', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'min'=>0, 'max'=>999999,
+                                                                                             'label'=>$_lang['resource_opt_menu_index'],
+                                                                                             'help'=>$_lang['resource_opt_menu_index_help'],
+                                                                                             'value'=>$content['menuindex']));
+$tpe->setElement('input.checkbox','mutate.documentPane.tabGeneral.section1.hidemenucheck',   array('name'=>'hidemenucheck', 'onchange'=>'documentDirty=true;', 'onclick'=>'changestate(document.mutate.hidemenu);',
+                                                                                             'label'=>$_lang['resource_opt_show_menu'],
+                                                                                             'help'=>$_lang['resource_opt_show_menu_help'],
+                                                                                             'value'=>$modx->htmlspecialchars(stripslashes($content['menutitle'])), 
+                                                                                             'checked'=>$content['hidemenu']!=1 ? 'checked="checked"':''));
+$tpe->setElement('input.hidden', 'mutate.hidemenu',                                          array('name'=>'hidemenu', 'type'=>'hidden', 'value'=>($content['hidemenu']==1) ? 1 : 0));
+
+$tpe->setElement('form.splitter','mutate.documentPane.tabGeneral.section1.splitter1');
+
+// Set parent-selector
+$parentlookup = false;
+if (isset ($_REQUEST['id'])) {
+	if ($content['parent'] == 0) {
+		$parentname = $site_name;
+	} else {
+		$parentlookup = $content['parent'];
+	}
+} elseif (isset ($_REQUEST['pid'])) {
+	if ($_REQUEST['pid'] == 0) {
+		$parentname = $site_name;
+	} else {
+		$parentlookup = $_REQUEST['pid'];
+	}
+} elseif (isset($_POST['parent'])) {
+	if ($_POST['parent'] == 0) {
+		$parentname = $site_name;
+	} else {
+		$parentlookup = $_POST['parent'];
+	}
+} else {
+	$parentname = $site_name;
+	$content['parent'] = 0;
+}
+if($parentlookup !== false && is_numeric($parentlookup)) {
+	$rs = $modx->db->select('pagetitle', $tbl_site_content, "id='{$parentlookup}'");
+	$parentname = $modx->db->getValue($rs);
+	if (!$parentname) {
+		$modx->webAlertAndQuit($_lang["error_no_parent"]);
+	}
+}
+
+$tpe->setElement('raw', 'mutate.documentPane.tabGeneral.section1.parent',                    array('label'=>$_lang['resource_parent'], 'content'=>'
+	<img alt="tree_folder" name="plock" src="'.$_style['tree_folder'].'" onclick="enableParentSelection(!allowParentSelection);" style="cursor:pointer;" />
+	<b><span id="parentName">'. (isset($_REQUEST['pid']) ? $_REQUEST['pid'] : $content['parent']) .' ('.$parentname.')</span></b>'
+));
+$tpe->setElement('input.hidden', 'mutate.parent',                                          array('name'=>'parent', 'type'=>'hidden', 'onchange'=>'documentDirty=true;', 'value'=>isset($_REQUEST['pid']) ? $_REQUEST['pid'] : $content['parent']));
+
+// Special function: Set an outerTpl for all childs (in this case inputs) of 'section1', ignore elements with type 'form.splitter'
+$tpe->setElementChildsTpe('mutate.documentPane.tabGeneral.section1', 'outerTpl', 'form.table.row.tooltip', 'form.splitter');
+
+// Content / Show Richtexteditor
+if ($content['type'] == 'document' || $_REQUEST['a'] == '4') {
+	
+	$tpe->setElement('section', 'mutate.documentPane.tabGeneral.section2',             array('label'=>$_lang['resource_content']), array('innerTpl'=>NULL)); // innerTpl = remove table-wrapper etc
+
+	if (($content['richtext'] == 1 || $_REQUEST['a'] == '4') && $use_editor == 1) {
+		$htmlContent = $content['content'];
+
+		$tpe->setElement('input.textarea','mutate.documentPane.tabGeneral.section2.ta',   array('name'=>'ta','onchange'=>'documentDirty=true;', 'style'=>'width:100%; height: 400px;',
+		                                                                                               // 'label'=>$_lang['resource_summary'],
+		                                                                                               // 'help'=>$_lang['resource_summary_help'],
+		                                                                                               'value'=>$modx->htmlspecialchars($htmlContent)),
+			array('outerTpl'=>'form.tableless.row')); // outerTpl = remove table-rows etc;
+		
+		// Template Select-Box
+		$tpe->setElement('input.select','mutate.documentPane.tabGeneral.section2.which_editor', array('name'=>'which_editor', 'onchange'=>'changeRTE();',
+		                                                                                               'label'=>$_lang['which_editor_title']),
+			array('outerTpl'=>'form.tableless.row')); // outerTpl = remove table-rows etc;
+		
+		// Set option "none"
+		// @todo: Add attr.selected
+		$tpe->setElement('select.option',  'mutate.documentPane.tabGeneral.section2.which_editor.opt_none', array('label'=>$_lang['none'], 'value'=>'none'));
+
+		// Now invoke OnRichTextEditorRegister event
+		$evtOut = $modx->invokeEvent("OnRichTextEditorRegister");
+		if (is_array($evtOut)) {
+			for ($i = 0; $i < count($evtOut); $i++) {
+				$editor = $evtOut[$i];
+				$selected = $modx->config['which_editor'] == $editor ? 'selected="selected"' : '';
+				$tpe->setElement('select.option',  'mutate.documentPane.tabGeneral.section2.which_editor.opt'.$i, array('label'=>$editor, 'value'=>$editor, 'selected'=>$selected));
+			}
+		}
+		
+		// Richtext-[*content*]
+		$richtexteditorIds = array();
+		$richtexteditorOptions = array();
+		$richtexteditorIds[$modx->config['which_editor']][] = 'ta';
+		$richtexteditorOptions[$modx->config['which_editor']]['ta'] = '';
+		
+	} else {
+		$tpe->setElement('input.textarea','mutate.documentPane.tabGeneral.section2.ta',   array('name'=>'ta', 'class'=>'phptextarea', 'onchange'=>'documentDirty=true;', 'style'=>'width:100%; height: 400px;',
+			                                                                                    'value'=>$modx->htmlspecialchars($content['content'])),
+			array('outerTpl'=>NULL)); // innerTpl = remove table-rows etc
+	}
+}
+
+// Template Variables
+if (($content['type'] == 'document' || $_REQUEST['a'] == '4') || ($content['type'] == 'reference' || $_REQUEST['a'] == 72)) {
+	
+	$tpe->setElement('section', 'mutate.documentPane.tabGeneral.section3', array('label'=>$_lang['settings_templvars']));
+
+	$template = $default_template;
+	if (isset ($_REQUEST['newtemplate'])) {
+		$template = $_REQUEST['newtemplate'];
+	} else {
+		if (isset ($content['template']))
+			$template = $content['template'];
+	}
+
+	$field = "DISTINCT tv.*, IF(tvc.value!='',tvc.value,tv.default_text) as value, tvtpl.rank as tvrank";
+	$vs = array($tbl_site_tmplvars, $tbl_site_tmplvar_templates, $tbl_site_tmplvar_contentvalues, $id, $tbl_site_tmplvar_access);
+	$from = vsprintf("%s AS tv INNER JOIN %s AS tvtpl ON tvtpl.tmplvarid = tv.id
+                         LEFT JOIN %s AS tvc ON tvc.tmplvarid=tv.id AND tvc.contentid='%s'
+                         LEFT JOIN %s AS tva ON tva.tmplvarid=tv.id", $vs);
+	$dgs = $docgrp ? " OR tva.documentgroup IN ({$docgrp})" : '';
+	$vs = array($template, $_SESSION['mgrRole'], $dgs);
+	$where = vsprintf("tvtpl.templateid='%s' AND (1='%s' OR ISNULL(tva.documentgroup) %s)", $vs);
+	$rs = $modx->db->select($field,$from,$where,'tvtpl.rank,tv.rank, tv.id');
+	$limit = $modx->db->getRecordCount($rs);
+	if ($limit > 0) {
+		$tvsArray = $modx->db->makeArray($rs,'name');
+		require_once(MODX_MANAGER_PATH.'includes/tmplvars.inc.php');
+		require_once(MODX_MANAGER_PATH.'includes/tmplvars.commands.inc.php');
+		$i = 0;
+		foreach ($tvsArray as $row) {
+			// Go through and display all Template Variables
+			if ($row['type'] == 'richtext' || $row['type'] == 'htmlarea') {
+				// determine TV-options
+				$tvOptions = $modx->parseProperties($row['elements']);
+				if(!empty($tvOptions)) {
+					// Allow different Editor with TV-option {"editor":"CKEditor4"} or &editor=Editor;text;CKEditor4
+					$editor = isset($tvOptions['editor']) ? $tvOptions['editor']: $modx->config['which_editor'];
+				};
+				// Add richtext editor to the list
+				$richtexteditorIds[$editor][] = "tv".$row['id'];
+				$richtexteditorOptions[$editor]["tv".$row['id']] = $tvOptions;
+			}
+			// splitter
+			if ($i++ > 0)
+				$tpe->setElement('form.splitter','mutate.documentPane.tabGeneral.section3.splitter'.$i);
+
+			// post back value
+			if(array_key_exists('tv'.$row['id'], $_POST)) {
+				if(is_array($_POST['tv'.$row['id']])) {
+					$tvPBV = implode('||', $_POST['tv'.$row['id']]);
+				} else {
+					$tvPBV = $_POST['tv'.$row['id']];
+				}
+			} else {
+				$tvPBV = $row['value'];
+			}
+
+			$tvDescription = (!empty($row['description'])) ? '<br /><span class="comment">' . $row['description'] . '</span>' : '';
+			$tvInherited = (substr($tvPBV, 0, 8) == '@INHERIT') ? '<br /><span class="comment inherited">(' . $_lang['tmplvars_inherited'] . ')</span>' : '';
+			$tvName = $modx->hasPermission('edit_template') ? '<br/><small class="protectedNode">[*'.$row['name'].'*]</small>' : '';
+
+			$tpe->setElement('input.templatevar', 'mutate.documentPane.tabGeneral.section3.tv'.$i, array(
+				'caption'=>$row['caption'],
+				'name'=>$tvName,
+				'description'=>$tvDescription,
+				'inherited'=>$tvInherited,
+				'tv'=>renderFormElement($row['type'], $row['id'], $row['default_text'], $row['elements'], $tvPBV, '', $row, $tvsArray)
+			));
+		}
+		
+	} else {
+		// There aren't any Template Variables
+		$tpe->setElement('message', 'mutate.documentPane.tabGeneral.section3.message', array('message'=>$_lang['tmplvars_novars']));
+	}
+}
+
+// Tab "Settings"
+$tpe->setElement('tab',           'mutate.documentPane.tabSettings', 	                 array('label'=>$_lang['settings_page_settings']));
+$tpe->setElement('section.blank', 'mutate.documentPane.tabSettings.section1');
+
+$mx_can_pub = $modx->hasPermission('publish_document') ? '' : 'disabled="disabled" ';
+
+$tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.publishedcheck', 
+	array('name'=>'publishedcheck', 'onchange'=>'documentDirty=true;', 'onclick'=>'changestate(document.mutate.published);',
+	     'label'=>$_lang['resource_opt_published'],
+	     'help'=>$_lang['resource_opt_published_help'],
+	     'checked'=>(isset($content['published']) && $content['published']==1) || (!isset($content['published']) && $publish_default==1) ? 'checked="checked"':'',
+	     'manual'=>$mx_can_pub));
+$tpe->setElement('input.hidden', 'mutate.published', array('name'=>'hidemenu', 'type'=>'hidden', 'value'=>(isset($content['published']) && $content['published']==1) || (!isset($content['published']) && $publish_default==1) ? 1 : 0));
+
+$tpe->setElement('input.date','mutate.documentPane.tabSettings.section1.pub_date',
+	array('name'=>'pub_date', 'onblur'=>'documentDirty=true;',
+	      'label'=>$_lang['page_data_publishdate'],
+	      'help'=>$_lang['page_data_publishdate_help'],
+	      'value'=>$content['pub_date']=="0" || !isset($content['pub_date']) ? '' : $modx->toDateFormat($content['pub_date']),
+	      'manual'=>$mx_can_pub));
+	
+$tpe->setElement('input.date','mutate.documentPane.tabSettings.section1.unpub_date',
+	array('name'=>'unpub_date', 'onblur'=>'documentDirty=true;',
+	      'label'=>$_lang['page_data_unpublishdate'],
+	      'help'=>$_lang['page_data_unpublishdate_help'],
+	      'value'=>$content['unpub_date']=="0" || !isset($content['unpub_date']) ? '' : $modx->toDateFormat($content['unpub_date']),
+	      'manual'=>$mx_can_pub));
+	
+$tpe->setElement('form.message', 'mutate.documentPane.tabSettings.section1.dateinfo', array('message'=>'[+lang.datetime_format+] <em>'. $modx->config['datetime_format'] .' HH:MM:SS</em>'));
+
+$tpe->setElement('form.splitter','mutate.documentPane.tabSettings.section1.splitter1');
+
+if ($_SESSION['mgrRole'] == 1 || $_REQUEST['a'] != '27' || $_SESSION['mgrInternalKey'] == $content['createdby'] || $modx->hasPermission('change_resourcetype')) {
+	// Resource-Type Select-Box
+	$tpe->setElement('input.select','mutate.documentPane.tabSettings.section1.type', array('name'=>'type', 'onchange'=>'documentDirty=true;',
+	                                                                                              'label'=>$_lang['resource_type']));
+	// Select-Options
+	$tpe->setElement('select.option',  'mutate.documentPane.tabSettings.section1.type.opt1', array('label'=>$_lang['resource_type_webpage'], 'value'=>'document',
+		'selected'=>(($content['type'] == "document" || $_REQUEST['a'] == '85' || $_REQUEST['a'] == '4') ? ' selected="selected"' : "")));
+	$tpe->setElement('select.option',  'mutate.documentPane.tabSettings.section1.type.opt2', array('label'=>$_lang['resource_type_weblink'], 'value'=>'reference',
+		'selected'=>(($content['type'] == "reference" || $_REQUEST['a'] == '72') ? ' selected="selected"' : "")));
+
+	// Content-Type Select-Box
+	$tpe->setElement('input.select','mutate.documentPane.tabSettings.section1.contentType', array('name'=>'contentType', 'onchange'=>'documentDirty=true;',
+	                                                                                       'label'=>$_lang['page_data_contentType']));
+	// Select-Options
+	if (!$content['contentType'])
+		$content['contentType'] = 'text/html';
+	$custom_contenttype = (isset ($custom_contenttype) ? $custom_contenttype : "text/html,text/plain,text/xml");
+	$ct = explode(",", $custom_contenttype);
+	for ($i = 0; $i < count($ct); $i++) {
+		$tpe->setElement('select.option',  'mutate.documentPane.tabSettings.section1.contentType.opt'.($i+2), array('label'=>$ct[$i], 'value'=>$ct[$i],
+		                                                                                               'selected'=>($content['contentType'] == $ct[$i] ? ' selected="selected"' : '')));
+	}
+
+	// Content-Type Select-Box
+	$tpe->setElement('input.select','mutate.documentPane.tabSettings.section1.content_dispo', array('name'=>'content_dispo', 'onchange'=>'documentDirty=true;', 'manual'=>'size="1"',
+	                                                                                              'label'=>$_lang['resource_opt_contentdispo']));
+	// Select-Options
+	$tpe->setElement('select.option',  'mutate.documentPane.tabSettings.section1.content_dispo.opt1', array('label'=>$_lang['inline'], 'value'=>'0',
+	                                                                                               'selected'=>(!$content['content_dispo'] ? ' selected="selected"':'')));
+	$tpe->setElement('select.option',  'mutate.documentPane.tabSettings.section1.content_dispo.opt2', array('label'=>$_lang['attachment'], 'value'=>'1',
+                                                                                                        'selected'=>($content['content_dispo']==1 ? ' selected="selected"':'')));
+
+	$tpe->setElement('form.splitter', 'mutate.documentPane.tabSettings.section1.splitter1');
+	
+	
+} else {
+	if ($content['type'] != 'reference' && $_REQUEST['a'] != '72') {
+		// non-admin managers creating or editing a document resource
+		$tpe->setElement('input.hidden', 'mutate.contentType', array('name'=>'contentType', 'type'=>'hidden', 'value'=>isset($content['contentType']) ? $content['contentType'] : "text/html"));
+		$tpe->setElement('input.hidden', 'mutate.type', array('name'=>'type', 'type'=>'hidden', 'value'=>'document'));
+		$tpe->setElement('input.hidden', 'mutate.content_dispo', array('name'=>'content_dispo', 'type'=>'hidden', 'value'=>isset($content['content_dispo']) ? $content['content_dispo'] : '0'));
+	} else {
+		// non-admin managers creating or editing a reference (weblink) resource
+		$tpe->setElement('input.hidden', 'mutate.type', array('name'=>'type', 'type'=>'hidden', 'value'=>'reference'));
+		$tpe->setElement('input.hidden', 'mutate.contentType', array('name'=>'contentType', 'type'=>'hidden', 'value'=>'text/html'));
+	}
+}//if mgrRole
+
+// Is folder / container
+$tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.isfoldercheck', array('name'=>'isfoldercheck', 'onclick'=>'changestate(document.mutate.isfolder);',
+                                                                                                   'label'=>$_lang['resource_opt_folder'],
+                                                                                                   'help'=>$_lang['resource_opt_show_menu_help'],
+                                                                                                   'checked'=>($content['isfolder']==1||$_REQUEST['a']=='85') ? "checked" : ''));
+$tpe->setElement('input.hidden', 'mutate.isfolder',                                         array('name'=>'isfolder', 'type'=>'hidden', 'onchange'=>'documentDirty=true;', 'value'=>($content['isfolder']==1||$_REQUEST['a']=='85') ? 1 : 0));
+
+// Alias visible
+$tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.alias_visible_check', array('name'=>'alias_visible_check', 'onclick'=>'changestate(document.mutate.alias_visible);',
+                                                                                                  'label'=>$_lang['resource_opt_alvisibled'],
+                                                                                                  'help'=>$_lang['resource_opt_alvisibled_help'],
+                                                                                                  'checked'=>(!isset($content['alias_visible'])|| $content['alias_visible']==1) ? "checked" : ''));
+$tpe->setElement('input.hidden', 'mutate.alias_visible',                                          array('name'=>'alias_visible', 'type'=>'hidden', 'onchange'=>'documentDirty=true;', 'value'=>(!isset($content['alias_visible']) || $content['alias_visible']==1) ? 1 : '0'));
+
+// Richtext
+$tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.richtextcheck', array('name'=>'richtextcheck', 'onclick'=>'changestate(document.mutate.richtext);',
+                                                                                                        'label'=>$_lang['resource_opt_richtext'],
+                                                                                                        'help'=>$_lang['resource_opt_richtext_help'],
+                                                                                                        'checked'=>$content['richtext']==0 && $_REQUEST['a']=='27' ? '' : "checked"));
+$tpe->setElement('input.hidden', 'mutate.richtext',                                         array('name'=>'richtext', 'type'=>'hidden', 'onchange'=>'documentDirty=true;', 'value'=>$content['richtext']==0 && $_REQUEST['a']=='27' ? 0 : 1));
+
+// Track visitors
+$tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.donthitcheck', array('name'=>'donthitcheck', 'onclick'=>'changestate(document.mutate.donthit);',
+                                                                                                        'label'=>$_lang['track_visitors_title'],
+                                                                                                        'help'=>$_lang['resource_opt_trackvisit_help'],
+                                                                                                        'checked'=>($content['donthit']!=1) ? 'checked="checked"' : ''));
+$tpe->setElement('input.hidden', 'mutate.donthit',                                         array('name'=>'donthit', 'type'=>'hidden', 'onchange'=>'documentDirty=true;', 'value'=>($content['donthit']==1) ? 1 : 0));
+
+// Searchable
+$tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.searchablecheck', array('name'=>'searchablecheck', 'onclick'=>'changestate(document.mutate.searchable);',
+                                                                                                        'label'=>$_lang['page_data_searchable'],
+                                                                                                        'help'=>$_lang['page_data_searchable_help'],
+                                                                                                        'checked'=>(isset($content['searchable']) && $content['searchable']==1) || (!isset($content['searchable']) && $search_default==1) ? "checked" : ''));
+$tpe->setElement('input.hidden', 'mutate.searchable',                                         array('name'=>'searchable', 'type'=>'hidden', 'onchange'=>'documentDirty=true;', 'value'=>(isset($content['searchable']) && $content['searchable']==1) || (!isset($content['searchable']) && $search_default==1) ? 1 : 0));
+
+// Cacheable
+$tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.cacheablecheck', array('name'=>'cacheablecheck', 'onclick'=>'changestate(document.mutate.cacheable);',
+                                                                                                    'label'=>$_lang['page_data_cacheable'],
+                                                                                                    'help'=>$_lang['page_data_cacheable_help'],
+                                                                                                    'checked'=>(isset($content['cacheable']) && $content['cacheable']==1) || (!isset($content['cacheable']) && $cache_default==1) ? "checked" : ''));
+$tpe->setElement('input.hidden', 'mutate.cacheable',                                         array('name'=>'cacheable', 'type'=>'hidden', 'onchange'=>'documentDirty=true;', 'value'=>(isset($content['cacheable']) && $content['cacheable']==1) || (!isset($content['cacheable']) && $cache_default==1) ? 1 : 0));
+
+// Empty Cache
+$tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.syncsitecheck', array('name'=>'syncsitecheck', 'onclick'=>'changestate(document.mutate.syncsite);',
+                                                                                                        'label'=>$_lang['resource_opt_emptycache'],
+                                                                                                        'help'=>$_lang['resource_opt_emptycache_help'],
+                                                                                                        'checked'=>'checked="checked"'));
+$tpe->setElement('input.hidden', 'mutate.syncsite',                                          array('name'=>'syncsite', 'type'=>'hidden', 'value'=>1));
+
+// Set different row-template with help-icons
+$tpe->setElementChildsTpe('mutate.documentPane.tabSettings.section1', 'outerTpl', 'form.table.row.tooltip', 'form.splitter');
+
+// Tab "Meta Tags"
+if ($modx->hasPermission('edit_doc_metatags') && $modx->config['show_meta']) {
+	// get list of site keywords
+	$keywords = array();
+	$ds = $modx->db->select('id, keyword', $tbl_site_keywords, '', 'keyword ASC');
+	while ($row = $modx->db->getRow($ds)) {
+		$keywords[$row['id']] = $row['keyword'];
+	}
+	// get selected keywords using document's id
+	if (isset ($content['id']) && count($keywords) > 0) {
+		$keywords_selected = array();
+		$ds = $modx->db->select('keyword_id', $tbl_keyword_xref, "content_id='{$content['id']}'");
+		while ($row = $modx->db->getRow($ds)) {
+			$keywords_selected[$row['keyword_id']] = ' selected="selected"';
+		}
+	}
+
+	// get list of site META tags
+	$metatags = array();
+	$ds = $modx->db->select('id, name', $tbl_site_metatags);
+	while ($row = $modx->db->getRow($ds)) {
+		$metatags[$row['id']] = $row['name'];
+	}
+	// get selected META tags using document's id
+	if (isset ($content['id']) && count($metatags) > 0) {
+		$metatags_selected = array();
+		$ds = $modx->db->select('metatag_id', $tbl_site_content_metatags, "content_id='{$content['id']}'");
+		while ($row = $modx->db->getRow($ds)) {
+			$metatags_selected[$row['metatag_id']] = ' selected="selected"';
+		}
+	}
+
+	$tpe->setElement('tab',             'mutate.documentPane.tabMeta', 	                array('label'=>$_lang['settings_page_settings']));
+	$tpe->setElement('grid',            'mutate.documentPane.tabMeta.grid2_1', array(), array('tpl'=>'grid.2columns'));
+	$tpe->setElement('section.blank',   'mutate.documentPane.tabMeta.grid2_1.section1', array(), array('pos'=>'block1')); // Keywords
+	$tpe->setElement('section.blank',   'mutate.documentPane.tabMeta.grid2_1.section2', array(), array('pos'=>'block2')); // Metatags
+	
+	// Keywords Select-Box
+	$tpe->setElement('input.select',  'mutate.documentPane.tabMeta.grid2_1.section1.keywords', array('name'=>'keywords[]', 'onchange'=>'documentDirty=true;', 'manual'=>'multiple="multiple" size="16"',
+	                                                                                                'label'=>$_lang['keywords']));
+	// Select-Options
+	foreach ($keywords as $key=>$value) {
+		$tpe->setElement('select.option', 'mutate.documentPane.tabMeta.section1.keywords.opt_'.$key, array('label'=>$value, 'value'=>$key,
+		                                                                                                   'selected'=>$keywords_selected[$key]));
+	}
+	
+	// Clear Button
+	$tpe->setElement('input.button',  'mutate.documentPane.tabMeta.grid2_1.section1.clearKeywords', array('name'=>'', 'onclick'=>'clearKeywordSelection();', 'value'=>$_lang['deselect_keywords']));
+	
+	// Metatags Select-Box
+	$tpe->setElement('input.select',  'mutate.documentPane.tabMeta.grid2_1.section2.metatags', array('name'=>'metatags[]', 'onchange'=>'documentDirty=true;', 'manual'=>'multiple="multiple" size="16"',
+	                                                                                                 'label'=>$_lang['metatags']));
+	// Select-Options
+	foreach ($metatags as $key=>$value) {
+		$tpe->setElement('select.option', 'mutate.documentPane.tabMeta.section2.metatags.opt_'.$key, array('label'=>$value, 'value'=>$key,
+		                                                                                                        'selected'=>$metatags_selected[$key]));
+	}
+
+	// Clear Button
+	$tpe->setElement('input.button',  'mutate.documentPane.tabMeta.grid2_1.section2.clearMetatags', array('name'=>'', 'onclick'=>'clearMetatagSelection();', 'value'=>$_lang['deselect_metatags']));
+}
+
+	/*******************************
+	 * Document Access Permissions */
+	if ($use_udperms == 1) {
+		$groupsarray = array();
+		$sql = '';
+
+		$documentId = ($_REQUEST['a'] == '27' ? $id : (!empty($_REQUEST['pid']) ? $_REQUEST['pid'] : $content['parent']));
+		if ($documentId > 0) {
+			// Load up, the permissions from the parent (if new document) or existing document
+			$rs = $modx->db->select('id, document_group', $tbl_document_groups, "document='{$documentId}'");
+			while ($currentgroup = $modx->db->getRow($rs))
+				$groupsarray[] = $currentgroup['document_group'].','.$currentgroup['id'];
+
+			// Load up the current permissions and names
+			$vs = array($tbl_document_group_names, $tbl_document_groups, $documentId);
+			$from = vsprintf("%s AS dgn LEFT JOIN %s AS groups ON groups.document_group=dgn.id AND groups.document='%s'",$vs);
+			$rs = $modx->db->select('dgn.*, groups.id AS link_id',$from,'','name');
+		} else {
+			// Just load up the names, we're starting clean
+			$rs = $modx->db->select('*, NULL AS link_id', $tbl_document_group_names, '', 'name');
+		}
+
+		// retain selected doc groups between post
+		if (isset($_POST['docgroups']))
+			$groupsarray = array_merge($groupsarray, $_POST['docgroups']);
+
+		$isManager = $modx->hasPermission('access_permissions');
+		$isWeb     = $modx->hasPermission('web_access_permissions');
+
+		// Setup Basic attributes for each Input box
+		$inputAttributes = array(
+			'type' => 'checkbox',
+			'class' => 'checkbox',
+			'name' => 'docgroups[]',
+			'onclick' => 'makePublic(false);',
+		);
+		$permissions = array(); // New Permissions array list (this contains the HTML)
+		$permissions_yes = 0; // count permissions the current mgr user has
+		$permissions_no = 0; // count permissions the current mgr user doesn't have
+
+		// Loop through the permissions list
+		while ($row = $modx->db->getRow($rs)) {
+
+			// Create an inputValue pair (group ID and group link (if it exists))
+			$inputValue = $row['id'].','.($row['link_id'] ? $row['link_id'] : 'new');
+			$inputId    = 'group-'.$row['id'];
+
+			$checked    = in_array($inputValue, $groupsarray);
+			if ($checked) $notPublic = true; // Mark as private access (either web or manager)
+
+			// Skip the access permission if the user doesn't have access...
+			if ((!$isManager && $row['private_memgroup'] == '1') || (!$isWeb && $row['private_webgroup'] == '1'))
+				continue;
+
+			// Setup attributes for this Input box
+			$inputAttributes['id']    = $inputId;
+			$inputAttributes['value'] = $inputValue;
+			if ($checked)
+				$inputAttributes['checked'] = 'checked';
+			else    unset($inputAttributes['checked']);
+
+			// Create attribute string list
+			$inputString = array();
+			foreach ($inputAttributes as $k => $v) $inputString[] = $k.'="'.$v.'"';
+
+			// Make the <input> HTML
+			$inputHTML = '<input '.implode(' ', $inputString).' />';
+
+			// does user have this permission?
+			$from = "{$tbl_membergroup_access} AS mga, {$tbl_member_groups} AS mg";
+			$vs = array($row['id'], $_SESSION['mgrInternalKey']);
+			$where = vsprintf("mga.membergroup=mg.user_group AND mga.documentgroup=%s AND mg.member=%s", $vs);
+			$rsp = $modx->db->select('COUNT(mg.id)',$from,$where);
+			$count = $modx->db->getValue($rsp);
+			if($count > 0) {
+				++$permissions_yes;
+			} else {
+				++$permissions_no;
+			}
+			$permissions[] = "\t\t".'<li>'.$inputHTML.'<label for="'.$inputId.'">'.$row['name'].'</label></li>';
+		}
+		// if mgr user doesn't have access to any of the displayable permissions, forget about them and make doc public
+		if($_SESSION['mgrRole'] != 1 && ($permissions_yes == 0 && $permissions_no > 0)) {
+			$permissions = array();
+		}
+
+		// See if the Access Permissions section is worth displaying...
+		if (!empty($permissions)) {
+			// Add the "All Document Groups" item if we have rights in both contexts
+			if ($isManager && $isWeb)
+				array_unshift($permissions,"\t\t".'<li><input type="checkbox" class="checkbox" name="chkalldocs" id="groupall"'.(!$notPublic ? ' checked="checked"' : '').' onclick="makePublic(true);" /><label for="groupall" class="warning">' . $_lang['all_doc_groups'] . '</label></li>');
+			// Output the permissions list...
+
+			$tpe->setElement('tab',             'mutate.documentPane.tabAccess', 	                array('label'=>$_lang['access_permissions']));
+			$tpe->setElement('section.blank',   'mutate.documentPane.tabAccess.section1');
+
+			// Permissions-List
+			$tpe->setElement('form.message',    'mutate.documentPane.tabAccess.section1.msg', array('message'=>$_lang["access_permissions_docs_message"]));
+			$tpe->setElement('form.raw',        'mutate.documentPane.tabAccess.section1.permissions', array('content'=>'<ul>'.implode("\n", $permissions)."\n".'</ul>'));
+			
+		} // !empty($permissions)
+		elseif($_SESSION['mgrRole'] != 1 && ($permissions_yes == 0 && $permissions_no > 0) && ($_SESSION['mgrPermissions']['access_permissions'] == 1 || $_SESSION['mgrPermissions']['web_access_permissions'] == 1)) {
+			$tpe->setElement('form.message',    'mutate.documentPane.tabAccess.section1.msg', array('message'=>$_lang["access_permissions_docs_collision"]));
+		}
+	}
+	/* End Document Access Permissions *
+	 ***********************************/
+
+$tpe->setElement('input', 'mutate.save', array('name'=>'save', 'type'=>'submit'));
+
+// Render Elements-Matrix
+echo $tpe->renderFullDom();
+
+};
+
+// Not changed after switch to Template-engine 
 ?>
-</div><!--div class="tab-pane" id="documentPane"-->
-</div><!--div class="sectionBody"-->
-</fieldset>
-</form>
 
 <script type="text/javascript">
-    storeCurTemplate();
+	storeCurTemplate();
 </script>
 <?php
     if (($content['richtext'] == 1 || $_REQUEST['a'] == '4' || $_REQUEST['a'] == '72') && $use_editor == 1) {
-        if (is_array($richtexteditorIds)) {
-            foreach($richtexteditorIds as $editor=>$elements) {
-                // invoke OnRichTextEditorInit event
-                $evtOut = $modx->invokeEvent('OnRichTextEditorInit', array(
-                    'editor' => $editor,
-                    'elements' => $elements,
-                    'options' => $richtexteditorOptions[$editor]
-                ));
-                if (is_array($evtOut))
-                    echo implode('', $evtOut);
-            }
-        }
+	    if (is_array($richtexteditorIds)) {
+		    foreach($richtexteditorIds as $editor=>$elements) {
+			    // invoke OnRichTextEditorInit event
+			    $evtOut = $modx->invokeEvent('OnRichTextEditorInit', array(
+				    'editor' => $editor,
+				    'elements' => $elements,
+				    'options' => $richtexteditorOptions[$editor]
+			    ));
+			    if (is_array($evtOut))
+				    echo implode('', $evtOut);
+		    }
+	    }
     }
 
 function getDefaultTemplate()
 {
 	global $modx;
-	
+
 	switch($modx->config['auto_template_logic'])
 	{
 		case 'sibling':
 			if(!isset($_GET['pid']) || empty($_GET['pid']))
-		    {
-		    	$site_start = $modx->config['site_start'];
-		    	$where = "sc.isfolder=0 AND sc.id!='{$site_start}'";
-		    	$sibl = $modx->getDocumentChildren($_REQUEST['pid'], 1, 0, 'template', $where, 'menuindex', 'ASC', 1);
-		    	if(isset($sibl[0]['template']) && $sibl[0]['template']!=='') $default_template = $sibl[0]['template'];
+			{
+				$site_start = $modx->config['site_start'];
+				$where = "sc.isfolder=0 AND sc.id!='{$site_start}'";
+				$sibl = $modx->getDocumentChildren($_REQUEST['pid'], 1, 0, 'template', $where, 'menuindex', 'ASC', 1);
+				if(isset($sibl[0]['template']) && $sibl[0]['template']!=='') $default_template = $sibl[0]['template'];
 			}
 			else
 			{
@@ -1258,6 +892,6 @@ function getDefaultTemplate()
 			$default_template = $modx->config['default_template'];
 	}
 	if(!isset($default_template)) $default_template = $modx->config['default_template']; // default_template is already set
-	
+
 	return $default_template;
 }

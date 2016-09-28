@@ -12,7 +12,6 @@ $this->registerCssSrc('bootstrap', 'media/style/common/bootstrap/css/bootstrap.m
 // Bootstrap3 injected Javascript - allows use of MODX-placeholders
 // ->registerScriptFromFile('modx_jq','media/script/manager.js')
 
-->setTypeDefaults('section', 		array('tpl'=>'form.section', 'collapsed'=>'in'))
-->setTypeDefaults('input.password', array('tpl'=>'form.input.password'))
+->setTypeDefaults('section', 		array('tpl'=>'form.section', 'collapsed'=>'in')) // Form-Sections not collapsed by default  
 
 ;

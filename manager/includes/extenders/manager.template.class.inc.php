@@ -95,7 +95,7 @@ class ManagerTemplateEngine {
 		$dom[$elId] = array(
 			'type'=>$elType,
 			'id'=>$elId,
-			'target'=>$target == '' ? 'body' : $target,
+			'target'=>$target == '' ? 'body' : implode('.',$domTarget),
 			'attr'=>$attr,
 			'tpe'=>$tpe,
 			'childs'=>array()
@@ -135,22 +135,30 @@ class ManagerTemplateEngine {
 		$src = $dom[$sourceElId];
 		unset($dom[$sourceElId]);
 		
-		$this->addElement($src['type'], $src['id'], $targetEl, $src['attr'], $src['tpe']);
+		$this->setElement($src['type'], $src['id'], $targetEl, $src['attr'], $src['tpe']);
 		
 		return $this;
 	}
-
-	function addButtonTpe($target, $param, $value)
+	
+	// $param & $value = string, only $param = array 
+	function setButtonTpe($target, $param, $value='')
 	{
-		return $this->addDomElementTpe($target, $param, $value, 'buttons');
+		return $this->setDomElementTpe($target, $param, $value, 'buttons', false);
 	}
 
-	function addElementTpe($target, $param, $value)
+	// $param & $value = string, only $param = array
+	function setElementTpe($target, $param, $value='')
 	{
-		return $this->addDomElementTpe($target, $param, $value, 'elements');
+		return $this->setDomElementTpe($target, $param, $value, 'elements', false);
 	}
 
-	function addDomElementTpe($target, $param, $value, $category)
+	// $param & $value = string, only $param = array
+	function setElementChildsTpe($target, $param, $value='', $ignoreTypes='')
+	{
+		return $this->setDomElementTpe($target, $param, $value, 'elements', true, $ignoreTypes);
+	}
+	
+	function setDomElementTpe($target, $param, $value, $category, $allChildren, $ignoreTypes=false)
 	{
 		$domTarget = explode( '.', $target );
 		$elementId = array_pop($domTarget);
@@ -160,12 +168,23 @@ class ManagerTemplateEngine {
 			if(isset($dom[$key])) {
 				$dom =& $dom[$key]['childs'];
 			} else {
-				$this->debugMsg[] = sprintf('addDomElementTpe(%s) : Key "%s" not found for target "%s"', $category, $key, $target);
+				$this->debugMsg[] = sprintf('setDomElementTpe(%s) : Key "%s" not found for target "%s"', $category, $key, $target);
 				return $this;
 			}
 		}
 		
-		$dom[$elementId]['tpe'][$param] = $value;
+		if($allChildren) {
+			$ignoreTypes = $ignoreTypes != '' ? explode(',', $ignoreTypes) : false;
+			$dom =& $dom[$elementId]['childs'];
+			foreach($dom as $elId=>$el) {
+				if($ignoreTypes && in_array($el['type'], $ignoreTypes)) continue;
+				if(is_array($param)) $dom[$elId]['tpe'] = array_merge($dom[$elId]['tpe'], $param);
+				else $dom[$elId]['tpe'][$param] = $value;
+			}
+		} else {
+			if(is_array($param)) $dom[$elementId]['tpe'] = array_merge($dom[$elementId]['tpe'], $param);
+			else $dom[$elementId]['tpe'][$param] = $value;
+		}
 		
 		return $this;
 	}
@@ -190,7 +209,7 @@ class ManagerTemplateEngine {
 
 	function renderFullDom()
 	{
-		global $modx, $manager_theme;
+		global $modx, $manager_theme, $SystemAlertMsgQueque;
 		
 		// Load default or custom action-template before rendering body, parsing snippets etc
 		$actionTpl = MODX_MANAGER_PATH . 'media/style/' . $manager_theme . '/tpl/actions/' . $this->actionTpl . '.php';
@@ -204,8 +223,36 @@ class ManagerTemplateEngine {
 		} else {
 			return 'Action-Template not found: '.$this->actionTpl;
 		}
+		
+		$tpeFooter = '';
 
-		$source = $this->fetchTpl('body');
+		// display system alert window if messages are available
+		if (count($SystemAlertMsgQueque)>0) {
+			ob_start();
+			include "sysalert.display.inc.php";
+			$tpeFooter .= ob_get_contents();
+			ob_end_clean();
+		}
+		
+		$tpeFooter .= "
+		<script type='text/javascript'>
+			document.body.addEventListener('keydown', function (e) {
+				if ((e.which == '115' || e.which == '83' ) && (e.ctrlKey || e.metaKey)) {
+					document.getElementById( 'Button1' ).getElementsByTagName( 'a' )[0].click();
+					e.preventDefault();
+				}
+			});
+		</script>";
+		
+		if(in_array($modx->manager->action,array(85,27,4,72,13,11,12,87,88)))
+			$tpeFooter .= $modx->manager->loadDatePicker($modx->config['mgr_date_picker_path']);
+		
+		$placeholders = array(
+			'tpe'=>array(
+				'footer'=>$tpeFooter
+			));
+
+		$source = $this->fetchTpl('body', $placeholders);
 		return $modx->parseManagerDocumentSource($source);  // Render snippets etc
 	}
 
@@ -231,7 +278,8 @@ class ManagerTemplateEngine {
 		foreach($dom as $elId=>$el) {
 			$tpe = array();
 			if($iteration == $total) $tpe = array('cssFirst'=>'','cssLast'=>$cssLast);
-			if($iteration == 1) $tpe = array('cssFirst'=>$cssFirst, 'cssLast'=>'');
+			else if($iteration == 1) $tpe = array('cssFirst'=>$cssFirst, 'cssLast'=>'');
+			else $tpe = array('cssFirst'=>'', 'cssLast'=>'');
 			$phs = $this->prepareElementPlaceholders($el, '', $tpe);
 			$output .= $this->fetchTpl($rowTpl, $phs);
 			$iteration++;
@@ -436,13 +484,21 @@ class ManagerTemplateEngine {
 					$phs = $recursive;
 				}
 			}
+			// Recursive part END
 
 			// Prepare show_elements-mode
 			$fetch = $this->tpeOptions['show_elements'] ? '<div style="font-size:10px;font-family:monospace;font-weight: bold;background-color:#">'.$el['target'].'.'.$elId.'</div>' : '';
 
-			$elementTpl = $el['tpe']['tpl'];
-			$fetch .= $this->fetchTpl($elementTpl, $phs);
-
+			// Handle prepend-parameter
+			if(isset($el['tpe']['prepend'])) $fetch .= $el['tpe']['prepend'];
+			
+			// No more recursion / Render and return deepest child   
+			$fetch .= $this->fetchTpl($el['tpe']['tpl'], $phs);
+			
+			// Handle apppend-parameter
+			if(isset($el['tpe']['append'])) $fetch .= $el['tpe']['append'];
+			
+			// Wrap element inside an outerTpl
 			if(isset($el['tpe']['outerTpl'])) {
 				$output[$pos] .= $this->fetchTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs'=>$fetch))) . "\n";
 			} else {
@@ -469,14 +525,19 @@ class ManagerTemplateEngine {
 				$this->tplCache[$tpl]['html'] = $template;
 				$this->tplCache[$tpl]['tags'] = $tags[1];
 			} else {
-				return 'Template not found: '.$tpl;
+				$target = isset($placeholders['target']) ? $placeholders['target'] : '?';
+				$id = isset($placeholders['id']) ? $placeholders['id'] : '?';
+				if(empty($tpl)) $msg = sprintf('No template set for "%s.%s"', $target, $id);
+				else $msg = sprintf('Template-File %s not found for "%s.%s"', $tpl, $target, $id);
+				$this->debugMsg[] = $msg;
+				return $msg;
 			}
 		}
 		if($noParse) return $template;
 		return $this->parsePlaceholders($template, $placeholders);
 	}
 
-	function parsePlaceholders($source, $placeholder=array())
+	function parsePlaceholders($source, $placeholder=array(), $pastTags=array())
 	{
 		global $modx, $_lang, $_style;
 
@@ -513,6 +574,12 @@ class ManagerTemplateEngine {
 				$source = str_replace($tags[0][$key], $value, $source);
 			}
 		}
+		
+		// Recursive parsing
+		$tags = $modx->getTagsFromContent($source);
+		if(!empty($pastTags) && $tags === $pastTags) $source = 'parsePlaceholders(): Loop prevented with tags '.print_r($pastTags, true).$source;
+		else if(!empty($tags)) $source = $this->parsePlaceholders($source, $placeholder, $tags);
+		
 		return $source;
 	}
 }

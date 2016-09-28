@@ -2590,3 +2590,6 @@ form select {
 #helpPane li:not(:first-child) > strong { margin-top:1.4em; }
 #helpPane li > strong { display:block; font-size:14px; }
 #helpPane pre { font-size:12px; border:1px solid #888; padding:1em; }
+
+/* Bootstrap3 Add */
+.tab-pane .tab-page { background-color:#fff; }
