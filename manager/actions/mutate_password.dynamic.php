@@ -6,7 +6,7 @@ if(!$modx->hasPermission('change_password')) {
 
 global $_style, $_lang;
 
-$tpe =& $modx->manager->tpl;
+$tpe =& $modx->manager->tpe;
 $tpe->setActionTemplate('mutate_password.dynamic')
 ->setPlaceholder('title', $_lang['change_password'])
 // ->alert('This is an example alert / error-msg.', 'warning')

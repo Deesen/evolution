@@ -12,7 +12,7 @@ $depth = isset($depth) ? (int)$depth : 0;
 $cssFirst = isset($cssFirst) ? $cssFirst : '';
 $cssLast = isset($cssLast) ? $cssLast : '';
 
-$tpe =& $modx->manager->tpl;
+$tpe =& $modx->manager->tpe;
 
 switch($get) {
 	case 'css':

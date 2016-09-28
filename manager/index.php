@@ -172,6 +172,10 @@ foreach($_lang as $k=>$v)
 	if(strpos($v,'[+')!==false) $_lang[$k] = str_replace($s, $r, $v);
 }
 
+// Prepare Template-Engine after $_lang & $_style
+require(MODX_MANAGER_PATH.'includes/extenders/manager.template.class.inc.php');
+$modx->manager->tpe = new ManagerTemplateEngine;
+
 // send the charset header
 header('Content-Type: text/html; charset='.$modx_manager_charset);
 
@@ -295,21 +299,15 @@ switch ($action) {
 /********************************************************************/
 	case 85:
 		// get the mutate page for adding a folder
-		include_once(includeFileProcessor("includes/header.inc.php",$manager_theme));
 		include_once(includeFileProcessor("actions/mutate_content.dynamic.php",$manager_theme));
-		include_once(includeFileProcessor("includes/footer.inc.php",$manager_theme));
 	break;
 	case 27:
 		// get the mutate page for changing content
-		include_once(includeFileProcessor("includes/header.inc.php",$manager_theme));
 		include_once(includeFileProcessor("actions/mutate_content.dynamic.php",$manager_theme));
-		include_once(includeFileProcessor("includes/footer.inc.php",$manager_theme));
 	break;
 	case 4:
 		// get the mutate page for adding content
-		include_once(includeFileProcessor("includes/header.inc.php",$manager_theme));
 		include_once(includeFileProcessor("actions/mutate_content.dynamic.php",$manager_theme));
-		include_once(includeFileProcessor("includes/footer.inc.php",$manager_theme));
 	break;
 	case 5:
 		// get the save processor
@@ -805,9 +803,7 @@ switch ($action) {
 /********************************************************************/
 	case 72:
 		// get the weblink page
-		include_once(includeFileProcessor("includes/header.inc.php",$manager_theme));
 		include_once(includeFileProcessor("actions/mutate_content.dynamic.php",$manager_theme));
-		include_once(includeFileProcessor("includes/footer.inc.php",$manager_theme));
 	break;
 /********************************************************************/
 /* User management                                                  */

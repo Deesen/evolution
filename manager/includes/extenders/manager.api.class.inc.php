@@ -16,9 +16,6 @@ class ManagerAPI {
 	function __construct(){
 		global $action;
 		$this->action = $action; // set action directive
-		
-		require(MODX_MANAGER_PATH.'includes/extenders/manager.template.class.inc.php');
-		$this->tpl = new ManagerTemplateEngine;
 	}
 	
 	function initPageViewState($id=0){

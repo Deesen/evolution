@@ -18,7 +18,7 @@ class ManagerTemplateEngine {
 
 	function __construct()
 	{
-		global $modx, $modx_manager_charset, $_lang;
+		global $modx, $modx_manager_charset, $_lang, $_style;
 
 		// Prepare DOM-array
 		$this->dom['head'] = array();		// Everything related to <head>
@@ -37,9 +37,6 @@ class ManagerTemplateEngine {
 
 		$this->setPlaceholder('modx_manager_charset',$modx_manager_charset);
 
-		// Load template styles
-		require MODX_MANAGER_PATH.'media/style/'.$modx->config['manager_theme'].'/style.php';
-		
 		if(!isset($modx->config['mgr_jquery_path']))  $modx->config['mgr_jquery_path'] = 'media/script/jquery/jquery.min.js';
 		if(!isset($modx->config['mgr_date_picker_path'])) $modx->config['mgr_date_picker_path'] = 'media/script/air-datepicker/datepicker.inc.php';
 		
