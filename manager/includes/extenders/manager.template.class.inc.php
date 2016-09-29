@@ -5,7 +5,7 @@ class ManagerTemplateEngine {
 
 	var $tpeOptions = array(
 		'html_comments'=>true,
-		'show_elements'=>false,
+		'show_elements'=>true,
 		'echo_arrays'=>false,
 	);
 	var $actionTpl = '';
@@ -62,7 +62,7 @@ class ManagerTemplateEngine {
 		return $this->setDomElement($elType, $target, $attr, $tpe, 'elements');
 	}
 	
-	function setDomElement($elType, $target='', $attr=array(), $tpe=array(), $category)
+	function setDomElement($elType, $target='', $attr=array(), $tpe=array(), $category, $childs=array())
 	{
 		// @todo: replace by $this->getDomIndex()
 		$dom =& $this->dom[$category];
@@ -98,8 +98,29 @@ class ManagerTemplateEngine {
 			'target'=>$target == '' ? 'body' : implode('.',$domTarget),
 			'attr'=>$attr,
 			'tpe'=>$tpe,
-			'childs'=>array()
+			'childs'=>$childs
 		);
+		
+		return $this;
+	}
+
+	// Target example: "userform.tab2.section2"
+	function setElementOrder($elTarget, $order)
+	{
+		$domSource = explode('.', $elTarget);
+		$sourceElId = array_pop($domSource);
+
+		$dom       =& $this->dom['elements'];
+		foreach ($domSource as $key) {
+			if (isset($dom[$key])) {
+				$dom =& $dom[$key]['childs'];
+			}
+			else {
+				$this->debugMsg[] = sprintf('moveDomElement(%s): Key "%s" not found of source "%s"', 'elements', $key, $elTarget);
+				return $this;
+			}
+		}
+		$dom[$sourceElId]['tpe']['order'] = $order;
 		
 		return $this;
 	}
@@ -135,7 +156,7 @@ class ManagerTemplateEngine {
 		$src = $dom[$sourceElId];
 		unset($dom[$sourceElId]);
 		
-		$this->setElement($src['type'], $src['id'], $targetEl, $src['attr'], $src['tpe']);
+		$this->setDomElement($src['type'], $targetEl.'.'.$sourceElId, $src['attr'], $src['tpe'], $category, $src['childs']);
 		
 		return $this;
 	}
@@ -457,13 +478,27 @@ class ManagerTemplateEngine {
 
 		$iteration = 1;
 		$total = count($dom);
+
+		// Sort-function to sort by 'order'
+		if(!function_exists('cmp')) {
+			function cmp($a, $b) {
+				if ($a['tpe']['order'] == $b['tpe']['order']) {
+					return 0;
+				}
+
+				return ($a['tpe']['order'] < $b['tpe']['order']) ? -1 : 1;
+			}
+		}
+		uasort($dom,"cmp");
+		
 		foreach($dom as $elId=>$el) {
 
 			// Set first / last css-class
 			$tpe = array();
 			if($iteration === $total) $tpe = array('cssFirst'=>'','cssLast'=>isset($el['tpe']['cssLast']) ? $el['tpe']['cssLast'] : '');
-			if($iteration === 1) $tpe = array('cssFirst'=>isset($el['tpe']['cssFirst']) ? $el['tpe']['cssFirst'] : '','cssLast'=>'');
-
+			else if($iteration === 1) $tpe = array('cssFirst'=>isset($el['tpe']['cssFirst']) ? $el['tpe']['cssFirst'] : '','cssLast'=>'');
+			else $tpe = array('cssFirst'=>'', 'cssLast'=>'');
+			
 			$phs = $this->prepareElementPlaceholders($el, '', $tpe);
 			$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
 
@@ -582,4 +617,6 @@ class ManagerTemplateEngine {
 		
 		return $source;
 	}
+	
+	
 }

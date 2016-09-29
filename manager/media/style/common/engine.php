@@ -38,7 +38,9 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 ->setTypeDefaults('section.blank',	    array('tpl'=>'form.section.blank', 'innerTpl'=>'form.table'))
 ->setTypeDefaults('tabpane', 		    array('tpl'=>'tab.container', 'remember_last_tab'=>$modx->config['remember_last_tab'] == 1 ? 'true' : 'false'))
 ->setTypeDefaults('tab',	 		    array('tpl'=>'tab.tab', 'cssFirst'=>'in active'))
-->setTypeDefaults('grid',	 		    array('tpl'=>'grid.1column'))
+->setTypeDefaults('grid.1col', 		    array('tpl'=>'grid.1column'))
+->setTypeDefaults('grid.2col', 		    array('tpl'=>'grid.2columns'))
+->setTypeDefaults('grid.3col', 		    array('tpl'=>'grid.3columns'))
 ->setTypeDefaults('raw',	 		    array('tpl'=>'raw'))
 
 // Prepare main-buttons
