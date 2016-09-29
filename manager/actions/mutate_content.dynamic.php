@@ -536,7 +536,7 @@ $tpe->setElement('input.checkbox','mutate.documentPane.tabSettings.section1.publ
 	     'help'=>$_lang['resource_opt_published_help'],
 	     'checked'=>(isset($content['published']) && $content['published']==1) || (!isset($content['published']) && $publish_default==1) ? 'checked="checked"':'',
 	     'manual'=>$mx_can_pub));
-$tpe->setElement('input.hidden', 'mutate.published', array('name'=>'hidemenu', 'type'=>'hidden', 'value'=>(isset($content['published']) && $content['published']==1) || (!isset($content['published']) && $publish_default==1) ? 1 : 0));
+$tpe->setElement('input.hidden', 'mutate.published', array('name'=>'published', 'type'=>'hidden', 'value'=>(isset($content['published']) && $content['published']==1) || (!isset($content['published']) && $publish_default==1) ? 1 : '0'));
 
 $tpe->setElement('input.date','mutate.documentPane.tabSettings.section1.pub_date',
 	array('name'=>'pub_date', 'onblur'=>'documentDirty=true;',
