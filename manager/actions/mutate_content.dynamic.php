@@ -509,7 +509,7 @@ if (($content['type'] == 'document' || $_REQUEST['a'] == '4') || ($content['type
 			$tvInherited = (substr($tvPBV, 0, 8) == '@INHERIT') ? '<br /><span class="comment inherited">(' . $_lang['tmplvars_inherited'] . ')</span>' : '';
 			$tvName = $modx->hasPermission('edit_template') ? '<br/><small class="protectedNode">[*'.$row['name'].'*]</small>' : '';
 
-			$tpe->setElement('input.templatevar', 'mutate.documentPane.tabGeneral.section3.tv'.$i, array(
+			$tpe->setElement('input.templatevar', 'mutate.documentPane.tabGeneral.section3.'.$row['name'], array(
 				'caption'=>$row['caption'],
 				'name'=>$tvName,
 				'description'=>$tvDescription,
