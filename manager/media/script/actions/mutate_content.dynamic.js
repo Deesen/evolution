@@ -1,7 +1,7 @@
 var modx = [+modx_params+];
 
 window.addEvent('domready', function(){
-    $$('img[src=modx.style.icons_tooltip_over]').each(function(help_img) {
+    $$('img[src='+modx.style.icons_tooltip+']').each(function(help_img) {
         help_img.removeProperty('onclick');
         help_img.removeProperty('onmouseover');
         help_img.removeProperty('onmouseout');

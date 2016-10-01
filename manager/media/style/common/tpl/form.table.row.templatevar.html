@@ -1,10 +1,10 @@
 <tr>
-    <td align="left">
+    <td align="left" style="vertical-align:top">
         <span class="warning">[+attr.caption+]</span>
-        [+attr.name+]<br/>
-        [+attr.description+]<br/>
-        [+attr.inherited+]<br/>
-        [+attr.outsideLabel+]
+        [[if?&is=`[+attr.name+]|||!empty`&separator=`|||`&then=`<br/><small>[+attr.name+]</small>`]]
+        [[if?&is=`[+attr.description+]|||!empty`&separator=`|||`&then=`<br/>[+attr.description+]`]]
+        [[if?&is=`[+attr.inherited+]|||!empty`&separator=`|||`&then=`<br/>[+attr.inherited+]`]]
+        [[if?&is=`[+attr.outsideLabel+]|||!empty`&separator=`|||`&then=`<br/>[+attr.outsideLabel+]`]]
     </td>
     <td>
         [+childs+]

@@ -1,1 +1,3 @@
-<input type="number" name="[+attr.name+]" value="[+attr.value+]" min="" max="" [+attr.manual+]/>
+<input name="[+attr.name+]" type="number" class="inputBox [+attr.class+]" value="[+attr.value+]" style="width:100px;" onchange="[+attr.onchange+]" [+attr.manual+] />
+<input type="button" value="&lt;" onclick="var elm = document.mutate.[+attr.name+];var v=parseInt(elm.value+'')-1;elm.value=v>0? v:0;elm.focus();documentDirty=true;" />
+<input type="button" value="&gt;" onclick="var elm = document.mutate.[+attr.name+];var v=parseInt(elm.value+'')+1;elm.value=v>0? v:0;elm.focus();documentDirty=true;" />

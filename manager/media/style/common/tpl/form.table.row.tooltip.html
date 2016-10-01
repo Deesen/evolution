@@ -1,7 +1,9 @@
 <tr style="height: 24px;">
-    <td align="left"><span class="warning">[+attr.label+]</span>[+attr.outsideLabel+]</td>
+    <td width="100" align="left" valign="top"><span class="warning">[+attr.label+]</span>[+attr.outsideLabel+]</td>
     <td>
         [+childs+]
-        <img src="[+style.icons_tooltip+]" onmouseover="this.src='[+style.icons_tooltip+]';" onmouseout="this.src='[+style.icons_tooltip_over+]';" alt="[+attr.help+]" onclick="alert(this.alt);" style="cursor:help;" />
+        [[if?&is=`[+attr.help+]|||!empty`&separator=`|||`&then=`
+        &nbsp;&nbsp;<img src="[+style.icons_tooltip+]" onmouseover="this.src='[+style.icons_tooltip+]';" onmouseout="this.src='[+style.icons_tooltip+]';" alt="[+attr.help+]" onclick="alert(this.alt);" style="cursor:help;" />
+        `]]
     </td>
-</tr>            
+</tr>

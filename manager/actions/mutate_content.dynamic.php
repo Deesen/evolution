@@ -190,7 +190,7 @@ $modx_params = json_encode(array(
 		'value'=>$_lang["value"],
 	),
 	'style'=>array(
-		'icons_tooltip_over'=>$_style["icons_tooltip_over"],
+		'icons_tooltip'=>$_style["icons_tooltip"],
 		'tree_folder'=>$_style["tree_folder"],
 		'icons_set_parent'=>$_style["icons_set_parent"],
 	),
@@ -200,7 +200,7 @@ $modx_params = json_encode(array(
 		'action'=>$modx->manager->action,
 	)
 ));
-$tpe->registerScriptFromFile('mutate_content.dynamic', 'media/script/actions/mutate_content.dynamic.js', array('modx_params'=>$modx_params));
+$tpe->registerHeadScriptFromFile('mutate_content.dynamic', 'media/script/actions/mutate_content.dynamic.js', array('modx_params'=>$modx_params));
 
 // Create Form
 $tpe->setElement('form', 'mutate', array('name'=>'mutate', 'action'=>'index.php', 'method'=>'post', 'class'=>'content', 'enctype'=>'enctype="multipart/form-data"', 'onsubmit'=>'documentDirty=false;'));
@@ -256,8 +256,9 @@ if ($modx->config['use_breadcrumbs']) {
 		}
 	}
 	$out .= '<li class="breadcrumbs__li breadcrumbs__li_current">' . $title . '</li>';
-	
-	$tpe->setElement('raw', 'mutate.breadcrumbs', array('content'=>'<ul class="breadcrumbs">' . $out . '</ul>'));
+	$breadcrumbs = '<ul class="breadcrumbs">' . $out . '</ul>';
+	$tpe->setPlaceholder('breadcrumbs', $breadcrumbs);
+	$tpe->setElement('raw', 'mutate.breadcrumbs', array('content'=>$breadcrumbs));
 }
 
 $tpe->setElement('tabpane',	'mutate.documentPane', array('label'=>$_lang['change_password']));
@@ -270,46 +271,46 @@ if (is_array($evtOut)) $tpe->setElement('raw', 'mutate.documentPane.OnDocFormTem
 else {
 // $tpe->setElement('section', 'section1', 'mutate.documentPane.tab1', array('label' => $_lang['change_password']));
 $tpe->setElement('tab',           'mutate.documentPane.tabGeneral', 	                 array('label'=>$_lang['settings_general']));
-$tpe->setElement('section.blank', 'mutate.documentPane.tabGeneral.section1',             array(), array() );
-$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.pagetitle',   array('name'=>'pagetitle', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+$tpe->setElement('section.blank', 'mutate.documentPane.tabGeneral.section1',             array('label'=>$_lang['settings_general']), array() );
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.pagetitle',   array('name'=>'pagetitle', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
                                                                                               'label'=>$_lang['resource_title'], 
                                                                                               'help'=>$_lang['resource_title_help'], 
                                                                                               'value'=>$modx->htmlspecialchars(stripslashes($content['pagetitle']))),
 	// Special tpe-param 'append' to append HTML-code after the rendered element (in this case after <input>)
 	array('append'=>strpos($content['pagetitle'],'Duplicate of')!==false ? '<script>document.getElementsByName("pagetitle")[0].focus();</script>' : ''));
 	
-$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.longtitle',   array('name'=>'longtitle', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.longtitle',   array('name'=>'longtitle', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
                                                                                              'label'=>$_lang['long_title'],
                                                                                              'help'=>$_lang['resource_long_title_help'],
                                                                                              'value'=>$modx->htmlspecialchars(stripslashes($content['longtitle']))));
-$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.description', array('name'=>'description', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.description', array('name'=>'description', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
                                                                                              'label'=>$_lang['resource_description'],
                                                                                              'help'=>$_lang['resource_description_help'],
                                                                                              'value'=>$modx->htmlspecialchars(stripslashes($content['description']))));
-$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.alias',       array('name'=>'alias', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="100" spellcheck="true"',
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.alias',       array('name'=>'alias', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="100" spellcheck="true"',
                                                                                              'label'=>$_lang['resource_alias'],
                                                                                              'help'=>$_lang['resource_alias_help'],
                                                                                              'value'=>$modx->htmlspecialchars(stripslashes($content['alias']))));
-$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.link_attributes', array('name'=>'link_attributes', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.link_attributes', array('name'=>'link_attributes', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
                                                                                              'label'=>$_lang['link_attributes'],
                                                                                              'help'=>$_lang['link_attributes_help'],
                                                                                              'value'=>$modx->htmlspecialchars(stripslashes($content['link_attributes']))));
 // Web Link specific
 if ($content['type'] == 'reference' || $_REQUEST['a'] == '72') {
-$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.ta',          array('name'=>'ta', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.ta',          array('name'=>'ta', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
                                                                                                'label'=>$_lang['weblink'],
                                                                                                'outsideLabel'=>'<img name="llock" src="'.$_style["tree_folder"].'" alt="tree_folder" onclick="enableLinkSelection(!allowLinkSelection);" style="cursor:pointer;" />',
                                                                                                'help'=>$_lang['resource_weblink_help'],
                                                                                                'value'=>!empty($content['content']) ? stripslashes($content['content']) : 'http://'));
 }
 
-$tpe->setElement('input.textarea','mutate.documentPane.tabGeneral.section1.introtext',   array('name'=>'introtext', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'rows'=>3, 'cols'=>'',
+$tpe->setElement('input.textarea','mutate.documentPane.tabGeneral.section1.introtext',   array('name'=>'introtext', 'onchange'=>'documentDirty=true;', 'rows'=>3, 'cols'=>'',
                                                                                                'label'=>$_lang['resource_summary'],
                                                                                                'help'=>$_lang['resource_summary_help'],
                                                                                                'value'=>$modx->htmlspecialchars(stripslashes($content['introtext']))));
 
 // Template Select-Box
-$tpe->setElement('input.select','mutate.documentPane.tabGeneral.section1.template',      array('name'=>'template', 'class'=>'inputBox', 'onchange'=>'templateWarning();',
+$tpe->setElement('input.select','mutate.documentPane.tabGeneral.section1.template',      array('id'=>'template', 'name'=>'template', 'onchange'=>'templateWarning();',
 	                                                                                           'label'=>$_lang['page_data_template'],
 	                                                                                           'help'=>$_lang['page_data_template_help']));
 // Set option "(blank)"
@@ -345,18 +346,18 @@ while ($row = $modx->db->getRow($rs)) {
 }
 // Template Select-Box END
 
-$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.menutitle',       array('name'=>'menutitle', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
+$tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.section1.menutitle',       array('name'=>'menutitle', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',
                                                                                              'label'=>$_lang['resource_opt_menu_title'],
                                                                                              'help'=>$_lang['resource_opt_menu_title_help'],
                                                                                              'value'=>$modx->htmlspecialchars(stripslashes($content['menutitle']))));
-$tpe->setElement('input.number',  'mutate.documentPane.tabGeneral.section1.menuindex',       array('name'=>'menuindex', 'class'=>'inputBox', 'onchange'=>'documentDirty=true;', 'min'=>0, 'max'=>999999,
+$tpe->setElement('input.number',  'mutate.documentPane.tabGeneral.section1.menuindex',       array('name'=>'menuindex', 'onchange'=>'documentDirty=true;', 'min'=>0, 'max'=>999999,
                                                                                              'label'=>$_lang['resource_opt_menu_index'],
                                                                                              'help'=>$_lang['resource_opt_menu_index_help'],
                                                                                              'value'=>$content['menuindex']));
 $tpe->setElement('input.checkbox','mutate.documentPane.tabGeneral.section1.hidemenucheck',   array('name'=>'hidemenucheck', 'onchange'=>'documentDirty=true;', 'onclick'=>'changestate(document.mutate.hidemenu);',
                                                                                              'label'=>$_lang['resource_opt_show_menu'],
                                                                                              'help'=>$_lang['resource_opt_show_menu_help'],
-                                                                                             'value'=>$modx->htmlspecialchars(stripslashes($content['menutitle'])), 
+                                                                                             'value'=>$content['hidemenu'], 
                                                                                              'checked'=>$content['hidemenu']!=1 ? 'checked="checked"':''));
 $tpe->setElement('input.hidden', 'mutate.hidemenu',                                          array('name'=>'hidemenu', 'type'=>'hidden', 'value'=>($content['hidemenu']==1) ? 1 : 0));
 
@@ -394,8 +395,8 @@ if($parentlookup !== false && is_numeric($parentlookup)) {
 	}
 }
 
-$tpe->setElement('raw', 'mutate.documentPane.tabGeneral.section1.parent',                    array('label'=>$_lang['resource_parent'], 'content'=>'
-	<img alt="tree_folder" name="plock" src="'.$_style['tree_folder'].'" onclick="enableParentSelection(!allowParentSelection);" style="cursor:pointer;" />
+$tpe->setElement('raw', 'mutate.documentPane.tabGeneral.section1.parent',                    array('label'=>$_lang['resource_parent'], 'help'=>$_lang['resource_parent_help'], 
+	'content'=>'<img alt="tree_folder" name="plock" src="'.$_style['tree_folder'].'" onclick="enableParentSelection(!allowParentSelection);" style="cursor:pointer;" />
 	<b><span id="parentName">'. (isset($_REQUEST['pid']) ? $_REQUEST['pid'] : $content['parent']) .' ('.$parentname.')</span></b>'
 ));
 $tpe->setElement('input.hidden', 'mutate.parent',                                          array('name'=>'parent', 'type'=>'hidden', 'onchange'=>'documentDirty=true;', 'value'=>isset($_REQUEST['pid']) ? $_REQUEST['pid'] : $content['parent']));
@@ -416,9 +417,11 @@ if ($content['type'] == 'document' || $_REQUEST['a'] == '4') {
 		                                                                                               // 'help'=>$_lang['resource_summary_help'],
 		                                                                                               'value'=>$modx->htmlspecialchars($htmlContent)),
 			array('outerTpl'=>'form.tableless.row')); // outerTpl = remove table-rows etc;
+
+		$tpe->setElement('form.spacer','mutate.documentPane.tabGeneral.section2.spacer1');
 		
 		// Template Select-Box
-		$tpe->setElement('input.select','mutate.documentPane.tabGeneral.section2.which_editor', array('name'=>'which_editor', 'onchange'=>'changeRTE();',
+		$tpe->setElement('input.select','mutate.documentPane.tabGeneral.section2.which_editor', array('name'=>'which_editor', 'id'=>'which_editor', 'onchange'=>'changeRTE();',
 		                                                                                               'label'=>$_lang['which_editor_title']),
 			array('outerTpl'=>'form.tableless.row')); // outerTpl = remove table-rows etc;
 		
@@ -505,15 +508,11 @@ if (($content['type'] == 'document' || $_REQUEST['a'] == '4') || ($content['type
 				$tvPBV = $row['value'];
 			}
 
-			$tvDescription = (!empty($row['description'])) ? '<br /><span class="comment">' . $row['description'] . '</span>' : '';
-			$tvInherited = (substr($tvPBV, 0, 8) == '@INHERIT') ? '<br /><span class="comment inherited">(' . $_lang['tmplvars_inherited'] . ')</span>' : '';
-			$tvName = $modx->hasPermission('edit_template') ? '<br/><small class="protectedNode">[*'.$row['name'].'*]</small>' : '';
-
 			$tpe->setElement('input.templatevar', 'mutate.documentPane.tabGeneral.section3.'.$row['name'], array(
 				'caption'=>$row['caption'],
-				'name'=>$tvName,
-				'description'=>$tvDescription,
-				'inherited'=>$tvInherited,
+				'name'=>$modx->hasPermission('edit_template') ? '[*'.$row['name'].'*]' : '',
+				'description'=>(!empty($row['description'])) ? $row['description'] : '',
+				'inherited'=>(substr($tvPBV, 0, 8) == '@INHERIT') ? $_lang['tmplvars_inherited'] : '',
 				'tv'=>renderFormElement($row['type'], $row['id'], $row['default_text'], $row['elements'], $tvPBV, '', $row, $tvsArray)
 			));
 		}
@@ -526,7 +525,7 @@ if (($content['type'] == 'document' || $_REQUEST['a'] == '4') || ($content['type
 
 // Tab "Settings"
 $tpe->setElement('tab',           'mutate.documentPane.tabSettings', 	                 array('label'=>$_lang['settings_page_settings']));
-$tpe->setElement('section.blank', 'mutate.documentPane.tabSettings.section1');
+$tpe->setElement('section.blank', 'mutate.documentPane.tabSettings.section1',            array('label'=>$_lang['settings_page_settings']));
 
 $mx_can_pub = $modx->hasPermission('publish_document') ? '' : 'disabled="disabled" ';
 
@@ -544,6 +543,7 @@ $tpe->setElement('input.date','mutate.documentPane.tabSettings.section1.pub_date
 	      'help'=>$_lang['page_data_publishdate_help'],
 	      'value'=>$content['pub_date']=="0" || !isset($content['pub_date']) ? '' : $modx->toDateFormat($content['pub_date']),
 	      'manual'=>$mx_can_pub));
+$tpe->setElement('form.message', 'mutate.documentPane.tabSettings.section1.dateinfo1', array('message'=>'[+lang.datetime_format+] <em>'. $modx->config['datetime_format'] .' HH:MM:SS</em>'));
 	
 $tpe->setElement('input.date','mutate.documentPane.tabSettings.section1.unpub_date',
 	array('name'=>'unpub_date', 'onblur'=>'documentDirty=true;',
@@ -551,15 +551,15 @@ $tpe->setElement('input.date','mutate.documentPane.tabSettings.section1.unpub_da
 	      'help'=>$_lang['page_data_unpublishdate_help'],
 	      'value'=>$content['unpub_date']=="0" || !isset($content['unpub_date']) ? '' : $modx->toDateFormat($content['unpub_date']),
 	      'manual'=>$mx_can_pub));
-	
-$tpe->setElement('form.message', 'mutate.documentPane.tabSettings.section1.dateinfo', array('message'=>'[+lang.datetime_format+] <em>'. $modx->config['datetime_format'] .' HH:MM:SS</em>'));
+$tpe->setElement('form.message', 'mutate.documentPane.tabSettings.section1.dateinfo2', array('message'=>'[+lang.datetime_format+] <em>'. $modx->config['datetime_format'] .' HH:MM:SS</em>'));
 
 $tpe->setElement('form.splitter','mutate.documentPane.tabSettings.section1.splitter1');
 
 if ($_SESSION['mgrRole'] == 1 || $_REQUEST['a'] != '27' || $_SESSION['mgrInternalKey'] == $content['createdby'] || $modx->hasPermission('change_resourcetype')) {
 	// Resource-Type Select-Box
 	$tpe->setElement('input.select','mutate.documentPane.tabSettings.section1.type', array('name'=>'type', 'onchange'=>'documentDirty=true;',
-	                                                                                              'label'=>$_lang['resource_type']));
+	                                                                                       'help'=>$_lang['resource_type_message'],
+	                                                                                       'label'=>$_lang['resource_type']));
 	// Select-Options
 	$tpe->setElement('select.option',  'mutate.documentPane.tabSettings.section1.type.opt1', array('label'=>$_lang['resource_type_webpage'], 'value'=>'document',
 		'selected'=>(($content['type'] == "document" || $_REQUEST['a'] == '85' || $_REQUEST['a'] == '4') ? ' selected="selected"' : "")));
@@ -568,7 +568,8 @@ if ($_SESSION['mgrRole'] == 1 || $_REQUEST['a'] != '27' || $_SESSION['mgrInterna
 
 	// Content-Type Select-Box
 	$tpe->setElement('input.select','mutate.documentPane.tabSettings.section1.contentType', array('name'=>'contentType', 'onchange'=>'documentDirty=true;',
-	                                                                                       'label'=>$_lang['page_data_contentType']));
+	                                                                                              'help'=>$_lang['page_data_contentType_help'],
+	                                                                                              'label'=>$_lang['page_data_contentType']));
 	// Select-Options
 	if (!$content['contentType'])
 		$content['contentType'] = 'text/html';
@@ -581,14 +582,15 @@ if ($_SESSION['mgrRole'] == 1 || $_REQUEST['a'] != '27' || $_SESSION['mgrInterna
 
 	// Content-Type Select-Box
 	$tpe->setElement('input.select','mutate.documentPane.tabSettings.section1.content_dispo', array('name'=>'content_dispo', 'onchange'=>'documentDirty=true;', 'manual'=>'size="1"',
-	                                                                                              'label'=>$_lang['resource_opt_contentdispo']));
+	                                                                                                'help'=>$_lang['resource_opt_contentdispo_help'],
+	                                                                                                'label'=>$_lang['resource_opt_contentdispo']));
 	// Select-Options
 	$tpe->setElement('select.option',  'mutate.documentPane.tabSettings.section1.content_dispo.opt1', array('label'=>$_lang['inline'], 'value'=>'0',
 	                                                                                               'selected'=>(!$content['content_dispo'] ? ' selected="selected"':'')));
 	$tpe->setElement('select.option',  'mutate.documentPane.tabSettings.section1.content_dispo.opt2', array('label'=>$_lang['attachment'], 'value'=>'1',
                                                                                                         'selected'=>($content['content_dispo']==1 ? ' selected="selected"':'')));
 
-	$tpe->setElement('form.splitter', 'mutate.documentPane.tabSettings.section1.splitter1');
+	$tpe->setElement('form.splitter', 'mutate.documentPane.tabSettings.section1.splitter2');
 	
 	
 } else {
@@ -690,8 +692,8 @@ if ($modx->hasPermission('edit_doc_metatags') && $modx->config['show_meta']) {
 
 	$tpe->setElement('tab',             'mutate.documentPane.tabMeta', 	                array('label'=>$_lang['settings_page_settings']));
 	$tpe->setElement('grid',            'mutate.documentPane.tabMeta.grid2_1', array(), array('tpl'=>'grid.2columns'));
-	$tpe->setElement('section.blank',   'mutate.documentPane.tabMeta.grid2_1.section1', array(), array('pos'=>'block1')); // Keywords
-	$tpe->setElement('section.blank',   'mutate.documentPane.tabMeta.grid2_1.section2', array(), array('pos'=>'block2')); // Metatags
+	$tpe->setElement('section.blank',   'mutate.documentPane.tabMeta.grid2_1.section1', array('label'=>$_lang['keywords']), array('pos'=>'block1')); // Keywords
+	$tpe->setElement('section.blank',   'mutate.documentPane.tabMeta.grid2_1.section2', array('label'=>$_lang['metatags']), array('pos'=>'block2')); // Metatags
 	
 	// Keywords Select-Box
 	$tpe->setElement('input.select',  'mutate.documentPane.tabMeta.grid2_1.section1.keywords', array('name'=>'keywords[]', 'onchange'=>'documentDirty=true;', 'manual'=>'multiple="multiple" size="16"',
@@ -812,7 +814,7 @@ if ($modx->hasPermission('edit_doc_metatags') && $modx->config['show_meta']) {
 			// Output the permissions list...
 
 			$tpe->setElement('tab',             'mutate.documentPane.tabAccess', 	                array('label'=>$_lang['access_permissions']));
-			$tpe->setElement('section.blank',   'mutate.documentPane.tabAccess.section1');
+			$tpe->setElement('section.blank',   'mutate.documentPane.tabAccess.section1',           array('label'=>$_lang['access_permissions']));
 
 			// Permissions-List
 			$tpe->setElement('form.message',    'mutate.documentPane.tabAccess.section1.msg', array('message'=>$_lang["access_permissions_docs_message"]));
@@ -828,10 +830,10 @@ if ($modx->hasPermission('edit_doc_metatags') && $modx->config['show_meta']) {
 
 $tpe->setElement('input', 'mutate.save', array('name'=>'save', 'type'=>'submit'));
 
-// Render Elements-Matrix
-echo $tpe->renderFullDom();
-
 };
+
+// Output 
+echo $tpe->renderAction();
 
 // Not changed after switch to Template-engine 
 ?>

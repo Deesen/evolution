@@ -12,23 +12,27 @@ $depth = isset($depth) ? (int)$depth : 0;
 $cssFirst = isset($cssFirst) ? $cssFirst : '';
 $cssLast = isset($cssLast) ? $cssLast : '';
 
+$set = isset($set) ? $set : '';
+$value = isset($value) ? $value : '';
+
 $tpe =& $modx->manager->tpe;
 
+if($set) {
+	if(isset($tpe->tpeOptions[$set])) {
+		$tpe->tpeOptions[$set] = $value;
+	}
+	return '';
+}
+
 switch($get) {
-	case 'css':
-		return $tpe->mergeDomCss();
-		break;
-	case 'javascript':
-		return $tpe->mergeDomJs();
-		break;
 	case 'buttons':
 		return $tpe->mergeDomActionButtons($category);
 		break;
 	case 'alerts':
 		return $tpe->mergeDomAlerts($outerTpl, $rowTpl);
 		break;
-	case 'body':
-		return $tpe->mergeDomBody();
+	case 'action':
+		return $tpe->actionHtml;
 		break;
 	case 'element':
 		return $tpe->mergeElement($element);
@@ -36,15 +40,8 @@ switch($get) {
 	case 'list':
 		return $tpe->mergeElementsList($element, $depth, $outerTpl, $rowTpl, $cssFirst, $cssLast);
 		break;
-	case 'inputs':
-		return $tpe->mergeFormInputs($form, $outerTpl, $rowTpl, $useTabs, $useSections, $filter, $sortBy);
-		break;
-	case 'footer':
-		// return $tpe->mergeDomActionButtons($outerTpl, $rowTpl);
-		break;
-	case 'debug':
-		return $tpe->mergeDebugMsg();
-		break;
+
 }
+
 return '';
 ?>

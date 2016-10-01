@@ -303,6 +303,7 @@ switch ($action) {
 	break;
 	case 27:
 		// get the mutate page for changing content
+		ob_start(); // Necessary for template-engine
 		include_once(includeFileProcessor("actions/mutate_content.dynamic.php",$manager_theme));
 	break;
 	case 4:
@@ -957,6 +958,13 @@ switch ($action) {
 			</div>
 		";
 		include_once(includeFileProcessor("includes/footer.inc.php",$manager_theme));
+}
+
+// Handle template-engine
+if($modx->manager->tpe->isActive()) {
+	$actionHtml = ob_get_contents();
+	ob_end_clean();
+	echo $modx->manager->tpe->renderFullDom($actionHtml);
 }
 
 /********************************************************************/

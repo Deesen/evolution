@@ -62,12 +62,11 @@ $tpe->setActionTemplate('mutate_password.dynamic')
 ->setElement('form', 	'userform', 				array('name'=>'userform', 'action'=>'index.php?a=34', 'method'=>'post'))
 ->setElement('input', 	'userform.id',              array('name'=>'id', 'type'=>'hidden', 'value'=>$_GET['id']))
 ->setElement('section', 'userform.section1',        array('label'=>$_lang['change_password']))
-->setElement('message', 'userform.section1.msg1',   array('message'=>$_lang['change_password_message']))
 ->setElement('input', 	'userform.section1.pass1',  array('name'=>'pass1', 'type'=>'password', 'label'=>$_lang['change_password_new']))
 ->setElement('input', 	'userform.section1.pass2',  array('name'=>'pass2', 'type'=>'password', 'label'=>$_lang['change_password_confirm']))
 ->setElement('input', 	'userform.save',            array('name'=>'save', 'type'=>'submit'))
  
 ;             
 
-echo $tpe->renderFullDom();
+echo $tpe->renderAction();
 ?>

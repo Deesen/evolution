@@ -5,19 +5,20 @@
 $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 
 // Default Javascript-Files
-->registerScriptSrc('jquery', 		'[(mgr_jquery_path)]', '3.1.0')
-->registerScriptSrc('mootools',		'media/script/mootools/mootools.js', '1.12')
-->registerScriptSrc('moodx', 		'media/script/mootools/moodx.js')
-->registerScriptSrc('tabs', 		'media/script/tabpane.js')
+->registerHeadScriptSrc('jquery', 		'[(mgr_jquery_path)]', '3.1.0')
+->registerHeadScriptSrc('mootools',		'media/script/mootools/mootools.js', '1.12')
+->registerHeadScriptSrc('moodx', 		'media/script/mootools/moodx.js')
+->registerHeadScriptSrc('tabs', 		'media/script/tabpane.js')
 
 // Default injected Javascript - allows use of MODX-placeholders
-->registerScriptFromFile('modx_jq','media/script/manager.js')
+->registerHeadScriptFromFile('modx_jq','media/script/manager.js')
 
 ->setTypeDefaults('action.buttons',	    array('tpl'=>'action.buttons'))
 ->setTypeDefaults('action.button',	    array('tpl'=>'action.button'))
 ->setTypeDefaults('action.select',	    array('tpl'=>'action.select'))
 ->setTypeDefaults('form', 			    array('tpl'=>'form'))
 ->setTypeDefaults('form.splitter',	    array('tpl'=>'form.splitter',           'outerTpl'=>'form.table.row.colspan'))
+->setTypeDefaults('form.spacer',	    array('tpl'=>'form.spacer',             'outerTpl'=>'form.table.row.colspan'))
 ->setTypeDefaults('form.message',	    array('tpl'=>'form.message',            'outerTpl'=>'form.table.row.colspan'))
 ->setTypeDefaults('form.raw',	 		array('tpl'=>'raw',                     'outerTpl'=>'form.table.row.colspan'))
 ->setTypeDefaults('input.hidden', 	    array('tpl'=>'form.input.hidden'))
