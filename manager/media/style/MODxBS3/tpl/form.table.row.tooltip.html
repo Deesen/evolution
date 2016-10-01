@@ -1,0 +1,15 @@
+[[if?&is=`[+attr.help+]|||!empty`&separator=`|||`&then=`
+    <div class="form-group">
+        <label for="input_[+id+]">[+attr.label+]</label>[+attr.outsideLabel+]
+        <div class="input-group">
+            [+childs+]
+            <span class="input-group-addon help" data-toggle="tooltip" data-placement="top" title="[+attr.help+]"><i class="fa fa-question-circle" aria-hidden="true"></i></span>
+        </div>
+    </div>
+`&else=`
+    <div class="form-group">
+        <label for="input_[+id+]">[+attr.label+]</label>
+        [+attr.outsideLabel+]
+        [+childs+]
+    </div>
+`]]

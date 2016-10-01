@@ -3,24 +3,22 @@
 <head>
     <title>[+title+]</title>
     <meta http-equiv="Content-Type" content="text/html; charset=[+modx_manager_charset+]" />
-    [[mgrTpl?&get=`css`]]
-    [[mgrTpl?&get=`javascript`]]
+    [+tpe.head.css+]
+    [+tpe.head.javascript+]
 </head>
 <body ondragstart="return false"[+modx_textdir_class+]>
 <div id="preLoader"><table width="100%" border="0" cellpadding="0"><tr><td align="center"><div class="preLoaderText">[+style.ajax_loader+]</div></td></tr></table></div>
-
-<h1>[+title+]</h1>
 
 [[mgrTpl?&get=`buttons` &category=`main` &outerTpl=`actionButtons`&rowTpl=`actionButton`]]
 
 <div class="container-fluid">
     [[mgrTpl?&get=`alerts`  &outerTpl=`alerts`&rowTpl=`alert`]]
-    [[mgrTpl?&get=`body`]]
+    [+tpe.body+]
 </div>
 
 [[mgrTpl?&get=`footer`]]
 
-[[mgrTpl?&get=`debug`]]
-
+[+tpe.debug+]
+[+tpe.footer+]
 </body>
 </html>

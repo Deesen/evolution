@@ -1,13 +1,16 @@
     <!-- Nav tabs [+target+].[+id+] -->
-    [[mgrTpl?
-        &get=`list`
-        &element=`[+target+].[+id+]`
-        &depth=`1`
-        &outerTpl=`tab.nav.list`
-        &rowTpl=`tab.nav.tab`
-        &cssFirst=`active`
-    ]]
-    
+    <div class="tabs-affix-outer">
+        <div data-spy="affix" data-offset-top="28" data-offset-bottom="0">
+        [[mgrTpl?
+            &get=`list`
+            &element=`[+target+].[+id+]`
+            &depth=`1`
+            &outerTpl=`tab.nav.list`
+            &rowTpl=`tab.nav.tab`
+            &cssFirst=`active`
+        ]]
+        </div>
+    </div>
     <!-- Tab panes -->
     <div class="tab-content">
         [+childs+]
