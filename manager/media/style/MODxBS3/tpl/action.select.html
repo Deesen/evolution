@@ -1,23 +1,24 @@
-</li><li class="action-dropdown">
-    <a aria-expanded="false" aria-haspopup="true" role="button" data-toggle="dropdown" class="dropdown-toggle" href="#">
-        [+attr.label+] <span class="caret"></span>
-    </a>
     
-    <ul class="dropdown-menu">
-        [+childs+]
-    </ul>
+        <a aria-expanded="false" aria-haspopup="true" role="button" data-toggle="dropdown" class="btn dropdown-toggle" href="#">
+            [+attr.label+] <span class="caret"></span>
+        </a>
+        
+        <ul class="dropdown-menu">
+            [+childs+]
+        </ul>
+        
+        <!-- Dynamically handle Stay-Options for Save-Button -->
+        <input name="[+attr.name+]" type="hidden" value="[+attr.value+]" form="mutate" />
+        <script>
+            jQuery('.dropdown-menu a').click(function(){
+                document.mutate.[+attr.name+].value = jQuery(this).data('value');
+                jQuery('#selected_[+parent.id+]').text(jQuery(this).text());
+            });
+            jQuery( document ).ready(function() {
+                var stay = document.mutate.[+attr.name+].value == 0 ? 3 : document.mutate.[+attr.name+].value;
+                jQuery('#selected_[+parent.id+]').text(
+                    jQuery('#stay'+stay).text()
+                );
+            });
+        </script>
     
-    <!-- Dynamically handle Stay-Options for Save-Button -->
-    <input name="[+attr.name+]" type="hidden" value="[+attr.value+]" form="mutate" />
-    <script>
-        jQuery('.dropdown-menu a').click(function(){
-            document.mutate.[+attr.name+].value = jQuery(this).data('value');
-            jQuery('#selected_[+parent.id+]').text(jQuery(this).text());
-        });
-        jQuery( document ).ready(function() {
-            var stay = document.mutate.[+attr.name+].value == 0 ? 3 : document.mutate.[+attr.name+].value;
-            jQuery('#selected_[+parent.id+]').text(
-                jQuery('#stay'+stay).text()
-            );
-        });
-    </script>
