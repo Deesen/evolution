@@ -9,14 +9,12 @@
 <body ondragstart="return false"[+modx_textdir_class+]>
 <div id="preLoader"><table width="100%" border="0" cellpadding="0"><tr><td align="center"><div class="preLoaderText">[+style.ajax_loader+]</div></td></tr></table></div>
 
-[[mgrTpl?&get=`buttons` &category=`main` &outerTpl=`actionButtons`&rowTpl=`actionButton`]]
+[[mgrTpl?&get=`elements` &element=`actions`]]
 
-<div class="container-fluid">
-    [[mgrTpl?&get=`alerts`  &outerTpl=`alerts`&rowTpl=`alert`]]
+<div class="container-fluid no-padding">
+    [[mgrTpl?&get=`alerts`]]
     [+tpe.body+]
 </div>
-
-[[mgrTpl?&get=`footer`]]
 
 [+tpe.debug+]
 [+tpe.footer+]

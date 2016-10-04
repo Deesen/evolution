@@ -1,10 +1,15 @@
-<div class="form-group">
-    <label for="input_[+id+]">[+attr.caption+]
-    <small>
-        [[if?&is=`[+attr.name+]|||!empty`&separator=`|||`&then=` [+attr.name+]`]]
-        [[if?&is=`[+attr.description+]|||!empty`&separator=`|||`&then=` ([+attr.description+])`]]
-        [[if?&is=`[+attr.inherited+]|||!empty`&separator=`|||`&then=`<br/>[+attr.inherited+]`]]
-        [[if?&is=`[+attr.outsideLabel+]|||!empty`&separator=`|||`&then=`<br/>[+attr.outsideLabel+]`]]
-    </small></label>
-    [+childs+]
+<div class="row">
+    <div class="col-lg-1">
+        <label>[+attr.caption+]
+            <small>
+                [[if?&is=`[+attr.name+]|||!empty`&separator=`|||`&then=` [+attr.name+]`]]
+                [[if?&is=`[+attr.description+]|||!empty`&separator=`|||`&then=` ([+attr.description+])`]]
+                [[if?&is=`[+attr.inherited+]|||!empty`&separator=`|||`&then=`<br/>[+attr.inherited+]`]]
+                [[if?&is=`[+attr.outsideLabel+]|||!empty`&separator=`|||`&then=`<br/>[+attr.outsideLabel+]`]]
+            </small></label>
+    </div>
+    <div class="col-lg-11">
+        [+childs+]
+    </div>
 </div>
+<div class="spacer1em"></div>

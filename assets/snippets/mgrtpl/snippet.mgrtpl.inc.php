@@ -25,23 +25,24 @@ if($set) {
 }
 
 switch($get) {
-	case 'buttons':
-		return $tpe->mergeDomActionButtons($category);
-		break;
+	// Render alerts array
 	case 'alerts':
 		return $tpe->mergeDomAlerts($outerTpl, $rowTpl);
 		break;
-	case 'action':
-		return $tpe->actionHtml;
-		break;
 	case 'element':
-		return $tpe->mergeElement($element);
+		return $tpe->renderBodyElementsRecursive($element, false, true);
+		break;
+	case 'elements':
+		return $tpe->renderBodyElementsRecursive($element, true, true);
 		break;
 	case 'list':
 		return $tpe->mergeElementsList($element, $depth, $outerTpl, $rowTpl, $cssFirst, $cssLast);
 		break;
+	case 'footer':
+		// @todo: Proposal: New optional Footer-bar for infos, buttons etc..
+		return '';
 
 }
 
-return '';
+return $get ? 'Snippet mgrTpl: Get-Command '.$get.' not found' : '';
 ?>

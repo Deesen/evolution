@@ -3,7 +3,7 @@
     <br/>
 	[[mgrTpl?
 		&get=`element`
-		&element=`body`
+		&element=`userform`
 	]]
 </div>
 

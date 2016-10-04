@@ -4,18 +4,18 @@ if(IN_MANAGER_MODE!="true") die("<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please
 class ManagerTemplateEngine {
 
 	var $tpeOptions = array(
-		'html_comments'=>false, // show output + debug-info
+		'debug_info'=>true,     // show output + debug-info
 		'show_elements'=>false, // echo element-ids
 		'echo_arrays'=>false,   // echo only arrays
 	);
 	var $actionTpl = '';
 	var $actionTplHtml = '';
-	var $actionHtml = '';
 	var $dom = array();
 	var $placeholders = array();
 	var $tplCache = array();
 	var $typeDefaults = array();
 	var $debugMsg = array();
+	var $debugSource = '';
 	var $tpeActive = false;
 
 	function __construct()
@@ -24,8 +24,7 @@ class ManagerTemplateEngine {
 
 		// Prepare DOM-array
 		$this->dom['head'] = array();		// Everything related to <head>
-		$this->dom['elements'] = array();	// All elements to be rendered in DOM
-		$this->dom['buttons'] = array();	// All action-buttons organized exactly like elements
+		$this->dom['body'] = array();	    // All HTML-elements related to MODX action
 		$this->dom['footer'] = array();		// Everything related to new Footer-Bar
 		
 		// Prepare Header-Attributes
@@ -49,97 +48,28 @@ class ManagerTemplateEngine {
 		$customSetupFile = MODX_MANAGER_PATH.'media/style/'.$modx->config['manager_theme'].'/engine.php';
 		if(is_readable($customSetupFile)) require $customSetupFile;
 	}
-	
+
+	//////////////////////////////////////////////////////////////////
+	// Template-Engine API
+	//////////////////////////////////////////////////////////////////
 	function isActive() {
 		return $this->tpeActive;
 	}
 	
-	function setButton($elType, $target='', $attr=array(), $tpe=array()) {
-		return $this->setDomElement($elType, $target, $attr, $tpe, 'buttons');
-	}
-
 	// Target example: "userform.tab2.section2"
 	function setElement($elType, $target='', $attr=array(), $tpe=array())
 	{
-		return $this->setDomElement($elType, $target, $attr, $tpe, 'elements');
-	}
-	
-	function setDomElement($elType, $target='', $attr=array(), $tpe=array(), $category, $childs=array())
-	{
-		if(!is_array($attr)) $attr = array();
-		if(!is_array($tpe)) $tpe = array();
-		
-		// @todo: replace by $this->getDomIndex()
-		$dom =& $this->dom[$category];
-		$domTarget = explode( '.', $target );
-		$elId = array_pop($domTarget);
-		
-		if(empty($domTarget)) {
-			$dom = array($elId=>$this->dom[$category][$elId]);
-		} else if($target != '' && strtolower($target) != 'body') {
-			$dom =& $this->dom[$category];
-			foreach ($domTarget as $key) {
-				if (isset($dom[$key])) {
-					$dom =& $dom[$key]['childs'];
-				}
-				else {
-					$this->debugMsg[] = sprintf('setDomElement(%s) : Key "%s" not found for target "%s"', $category, $key, $elId);
-					return null;
-				}
-			}
-		}
-		
-		$tpe = array_merge(
-			$this->getTypeDefaults($elType, $attr),
-			array(
-				'order'=>count($dom),
-				'unique'=>md5($target),
-			),
-			$tpe
-		);
-		
-		$dom[$elId] = array(
-			'type'=>$elType,
-			'id'=>$elId,
-			'target'=>$target == '' ? 'body' : implode('.',$domTarget),
-			'attr'=>$attr,
-			'tpe'=>$tpe,
-			'childs'=>$childs
-		);
-		
-		return $this;
+		return $this->setDomElement($elType, $target, $attr, $tpe);
 	}
 
 	// Target example: "userform.tab2.section2"
 	function setElementOrder($elTarget, $order)
 	{
-		$domSource = explode('.', $elTarget);
-		$sourceElId = array_pop($domSource);
+		if(!isset($this->dom['body']['elements'][$elTarget])) $this->debugMsg(sprintf('setElementOrder() : Element-ID "%s" not found', $elTarget));
 
-		$dom       =& $this->dom['elements'];
-		foreach ($domSource as $key) {
-			if (isset($dom[$key])) {
-				$dom =& $dom[$key]['childs'];
-			}
-			else {
-				$this->debugMsg[] = sprintf('moveDomElement(%s): Key "%s" not found of source "%s"', 'elements', $key, $elTarget);
-				return $this;
-			}
-		}
-		$dom[$sourceElId]['tpe']['order'] = $order;
-		
+		$this->dom['body']['elements'][$elTarget]['tpe']['order'] = $order;
+
 		return $this;
-	}
-
-	function getTypeDefaults($elType, $attr)
-	{
-		$key = $elType;
-		if(isset($attr['type']) && !empty($attr['type'])) {
-			$key2 = $elType.'.'.$attr['type'];
-			if(isset($this->typeDefaults[$key2])) return $this->typeDefaults[$key2];
-		}
-		if(isset($this->typeDefaults[$key])) return $this->typeDefaults[$key];
-		return array();
 	}
 
 	function setTypeDefaults($type, $defaults) {
@@ -207,114 +137,182 @@ class ManagerTemplateEngine {
 	function getPlaceholder($key, $fallback=NULL) {
 		return $this->placeholders[$key] === '' & !is_null($fallback) ? $fallback : $this->placeholders[$key];
 	}
-	
+
 	// Example: 'userform.section1.pass2' to 'userform.section2'
 	function moveButton($sourceEl, $targetEl)
 	{
 		return $this->moveDomElement($sourceEl, $targetEl, 'buttons');
 	}
-	
+
 	function moveElement($sourceEl, $targetEl)
 	{
-		return $this->moveDomElement($sourceEl, $targetEl, 'elements');
-	}
-	
-	function moveDomElement($sourceEl, $targetEl, $category)
-	{
-		// @todo: replace by $this->getDomIndex() ?
-		$domSource = explode('.', $sourceEl); 
-		$sourceElId = array_pop($domSource);
-		
-		$dom       =& $this->dom[$category];
-		foreach ($domSource as $key) {
-			if (isset($dom[$key])) {
-				$dom =& $dom[$key]['childs'];
-			}
-			else {
-				$this->debugMsg[] = sprintf('moveDomElement(%s): Key "%s" not found of source "%s"', $category, $key, $sourceEl);
-				return $this;
-			}
-		}
-
-		$src = $dom[$sourceElId];
-		unset($dom[$sourceElId]);
-		
-		$this->setDomElement($src['type'], $targetEl.'.'.$sourceElId, $src['attr'], $src['tpe'], $category, $src['childs']);
-		
-		return $this;
-	}
-	
-	// $param & $value = string, only $param = array 
-	function setButtonTpe($target, $param, $value='')
-	{
-		return $this->setDomElementTpe($target, $param, $value, 'buttons', false);
+		return $this->moveDomElement($sourceEl, $targetEl, 'body');
 	}
 
 	// $param & $value = string, only $param = array
 	function setElementTpe($target, $param, $value='')
 	{
-		return $this->setDomElementTpe($target, $param, $value, 'elements', false);
+		return $this->setDomElementTpe($target, $param, $value, false);
 	}
 
 	// $param & $value = string, only $param = array
 	function setElementChildsTpe($target, $param, $value='', $ignoreTypes='')
 	{
-		return $this->setDomElementTpe($target, $param, $value, 'elements', true, $ignoreTypes);
+		return $this->setDomElementTpe($target, $param, $value, true, $ignoreTypes);
+	}
+
+	// Change tpe-params for single-element, or all its children
+	function setDomElementTpe($elementId, $param, $value, $allChildren, $ignoreTypes=false)
+	{
+		if(!isset($this->dom['body']['elements'][$elementId])) $this->debugMsg(sprintf('setDomElementTpe() : Element-ID "%s" not found', $elementId));
+			
+		if($allChildren) {
+			$ignoreTypes = $ignoreTypes != '' ? explode(',', $ignoreTypes) : false;
+			$childs = is_array($this->dom['body']['childs'][$elementId]) ? $this->dom['body']['childs'][$elementId] : array();
+			foreach($childs as $elId=>$empty) {
+				$el =& $this->dom['body']['elements'][$elId];
+				if($ignoreTypes && in_array($el['type'], $ignoreTypes)) continue;
+				if(is_array($param)) $el['tpe'] = array_merge($el['tpe'], $param);
+				else $el['tpe'][$param] = $value;
+			}
+		} else {
+			$el =& $this->dom['body']['elements'][$elementId];
+			if(is_array($param)) {
+				$el['tpe'] = array_merge($el['tpe'], $param);
+			}
+			else $el['tpe'][$param] = $value;
+		}
+
+		return $this;
 	}
 	
-	function setDomElementTpe($target, $param, $value, $category, $allChildren, $ignoreTypes=false)
+	// Move element and add it as child of another element
+	function moveDomElement($sourceEl, $targetEl)
 	{
-		$domTarget = explode( '.', $target );
-		$elementId = array_pop($domTarget);
-		
-		$dom =& $this->dom[$category];
-		if(!empty($domTarget)) {
-			foreach ($domTarget as $key) {
-				if (isset($dom[$key])) {
-					$dom =& $dom[$key]['childs'];
-				}
-				else {
-					$this->debugMsg[] = sprintf('setDomElementTpe(%s) : Key "%s" not found for target "%s"', $category, $key, $target);
+		if(!isset($this->dom['body']['elements'][$sourceEl])) $this->debugMsg(sprintf('setDomElementTpe() : Source Element-ID "%s" not found', $sourceEl));
+		if(!isset($this->dom['body']['elements'][$targetEl])) $this->debugMsg(sprintf('setDomElementTpe() : Target Element-ID "%s" not found', $targetEl));
 
+		$sourceParent = $this->dom['body']['parents'][$sourceEl][0];
+
+		unset($this->dom['body']['childs'][$sourceParent][$sourceEl]);
+		$this->dom['body']['childs'][$targetEl][$sourceEl] = '';
+
+		return $this;
+	}
+	
+	// To be used by action-files in /manager/actions/*.*
+	function renderAction()
+	{
+		global $modx, $manager_theme;
+
+		// Load default or custom action-template before rendering body, parsing snippets etc
+		$actionTpl = 'media/style/' . $manager_theme . '/tpl/actions/' . $this->actionTpl . '.php';
+		if (!is_readable(MODX_MANAGER_PATH.$actionTpl)) $actionTpl = 'media/style/common/tpl/actions/' . $this->actionTpl . '.php';
+		if (is_readable(MODX_MANAGER_PATH.$actionTpl)) {
+			$this->debugSource = $actionTpl;
+			ob_start();
+			$tpe =& $this;
+			require(MODX_MANAGER_PATH.$actionTpl);
+			$this->actionTplHtml = ob_get_contents();
+			ob_end_clean();
+			$this->debugSource = '';
+		} else {
+			return 'Action-Template not found: '.$this->actionTpl;
+		}
+
+		$source = $this->actionTplHtml;
+		$source = $modx->parseManagerDocumentSource($source);
+		$source = $this->parsePlaceholders($source);
+		return $source;
+	}
+	
+	
+	//////////////////////////////////////////////////////////////////
+	// Internal Functions
+	//////////////////////////////////////////////////////////////////
+	function setDomElement($elType, $target='', $attr=array(), $tpe=array())
+	{
+		// Check attr and tpe
+		if(!is_array($attr)) {
+			$attr = array();
+			$this->debugMsg(sprintf('Attr not passed as array for "%s"', $target));
+		}
+		if(!is_array($tpe)) {
+			$tpe = array();
+			$this->debugMsg(sprintf('Tpe not passed as array for "%s"', $target));
+		}
+		
+		// Determine parents and element-id
+		$parentsExp = explode( '.', $target );
+		$elementId = array_pop($parentsExp);   // Get last element as ID and remove it
+		$parents = array();
+		foreach($parentsExp as $i=>$parent) {
+			$parents[$parent] = '';
+		}
+		
+		$dom =& $this->dom['body'];
+		
+		// Check if all parents exist
+		$parent = 'body';
+		if(!empty($parents)) {
+			foreach ($parents as $parent=>$empty) {
+				if (!isset($dom['parents'][$parent])) {
+					$this->debugMsg(sprintf('setDomElement() : Parent "%s" not found in target "%s"', $parent, $target));
 					return $this;
 				}
 			}
 		}
 		
-		if($allChildren) {
-			$ignoreTypes = $ignoreTypes != '' ? explode(',', $ignoreTypes) : false;
-			$dom =& $dom[$elementId]['childs'];
-			foreach($dom as $elId=>$el) {
-				if($ignoreTypes && in_array($el['type'], $ignoreTypes)) continue;
-				if(is_array($param)) $dom[$elId]['tpe'] = array_merge($dom[$elId]['tpe'], $param);
-				else $dom[$elId]['tpe'][$param] = $value;
-			}
-		} else {
-			if(is_array($param)) $dom[$elementId]['tpe'] = array_merge($dom[$elementId]['tpe'], $param);
-			else $dom[$elementId]['tpe'][$param] = $value;
+		if(isset($dom['elements'][$elementId])) {
+			$this->debugMsg(sprintf('setDomElement() : Element with ID "%s" already exists', $elementId));
 		}
+		
+		// All parents found, now set parents of new element
+		$dom['parents'][$elementId] = array_reverse($parents);
+		
+		// Set childs of element
+		if(!isset($dom['childs'][$parent])) $dom['childs'][$parent] = array();
+		if(!in_array($elementId, $dom['childs'][$parent])) $dom['childs'][$parent][$elementId] = '';
+		
+		// Prepare html-attributes
+		if(!isset($attr['name'])) $attr['name'] = $elementId;   // Element-ID is default attribute: name="[+id+]"
+		
+		// Prepare template-engine params
+		$tpe = array_merge(
+			$this->getElementTypeDefaults($elType, $attr),  // Types are set in engine.php
+			// Add internal params
+			array(
+				'order'=>count($dom['childs'][$parent]),
+				'unique'=>md5($target),
+			),
+			$tpe
+		);
+		
+		// Finally set element with prepared values
+		$dom['elements'][$elementId] = array(
+			'type'=>$elType,
+			'id'=>$elementId,
+			'target'=>empty($parents) ? 'body' : $target,
+			'attr'=>$attr,
+			'tpe'=>$tpe
+		);
 		
 		return $this;
 	}
 
-	//////////////////////////////////
-	// @todo: Doesn´t work! How to do?
-	/*
-	function getDomIndex($target, &$dom)
+	function getElementTypeDefaults($elType, $attr)
 	{
-		$domTarget = explode( '.', $target );
-		foreach( $domTarget as $key ) {
-			if(isset($dom[$key])) {
-				$dom =& $dom[$key]['childs'];
-			} else {
-				$this->debugMsg[] = sprintf('Key "%s" not found for target "%s"', $key, $target);
-				return NULL;
-			}
+		$key = $elType;
+		// Allow easy sub-types via .
+		if(isset($attr['type']) && !empty($attr['type'])) {
+			$key2 = $elType.'.'.$attr['type'];
+			if(isset($this->typeDefaults[$key2])) return $this->typeDefaults[$key2];
 		}
-		return $dom;
+		if(isset($this->typeDefaults[$key])) return $this->typeDefaults[$key];
+		return array();
 	}
-	*/
-	
+
+	// Used in /manager/index.php
 	function renderFullDom($actionHtml)
 	{
 		global $modx, $manager_theme, $SystemAlertMsgQueque;
@@ -360,92 +358,33 @@ class ManagerTemplateEngine {
 		$source = $this->fetchTpl('body');
 		$source = $modx->parseManagerDocumentSource($source);   // Render snippets before replacing [+tpe.content+] which can contain "[[...]]" (Codemirror Javascript)
 		$source = $this->parsePlaceholders($source, $placeholders);
+		$source = $this->unprotectPlaceholders($source);
 		
 		return $source;
 	}
 
-	function renderAction()
-	{
-		global $modx, $manager_theme;
-
-		// Load default or custom action-template before rendering body, parsing snippets etc
-		$actionTpl = MODX_MANAGER_PATH . 'media/style/' . $manager_theme . '/tpl/actions/' . $this->actionTpl . '.php';
-		if (!is_readable($actionTpl)) $actionTpl = MODX_MANAGER_PATH . 'media/style/common/tpl/actions/' . $this->actionTpl . '.php';
-		if (is_readable($actionTpl)) {
-			ob_start();
-			$tpe =& $this;
-			require($actionTpl);
-			$this->actionTplHtml = ob_get_contents();
-			ob_end_clean();
-		} else {
-			return 'Action-Template not found: '.$this->actionTpl;
-		}
-		
-		$source = $this->actionTplHtml;
-		$source = $modx->parseManagerDocumentSource($source);
-		$source = $this->parsePlaceholders($source);
-		return $source;
-	}
-
-	
-
-	function mergeElement($element, $category='elements')
-	{
-		if($element =='body') $dom =& $this->dom[$category];
-		else {
-			// @todo: replace by $this->getDomIndex()
-			$domTarget = explode( '.', $element );
-			$elId = array_pop($domTarget);
-			if(empty($domTarget)) {
-				$dom = array($elId=>$this->dom[$category][$elId]);
-			} else {
-				$dom =& $this->dom[$category];
-				foreach ($domTarget as $key) {
-					if (isset($dom[$key])) {
-						$dom =& $dom[$key]['childs'];
-					}
-					else {
-						$this->debugMsg[] = sprintf('mergeElement(%s) : Key "%s" not found for target "%s"', $category, $key, $element);
-						return null;
-					}
-				}
-			}
-		}
-		
-		$body = $this->renderElementsRecursive($dom);
-		return join("\n", $body);
-	}
-
-	function mergeElementsList($element, $depth, $outerTpl, $rowTpl, $cssFirst='', $cssLast='')
+	function mergeElementsList($elementId, $depth, $outerTpl, $rowTpl, $cssFirst='', $cssLast='')
 	{
 		$output = '';
 
-		// @todo: replace by $this->getDomIndex()
-		$domTarget = explode( '.', $element );
-		$dom =& $this->dom['elements'];
-		foreach( $domTarget as $key ) {
-			if(isset($dom[$key])) {
-				$dom =& $dom[$key]['childs'];
-			} else {
-				$this->debugMsg[] = sprintf('mergeElementsList(elements) : Key "%s" not found for target "%s"', $key, $element);
-				return NULL;
-			}
-		}
+		$childs = $this->dom['body']['childs'][$elementId];
 
 		// @todo: Use "depth"-param
+		
 		$iteration = 1;
-		$total = count($dom);
-		foreach($dom as $elId=>$el) {
+		$total = count($childs);
+		foreach($childs as $elId=>$empty) {
+			$el = $this->dom['body']['elements'][$elId];
 			$tpe = array();
 			if($iteration == $total) $tpe = array('cssFirst'=>'','cssLast'=>$cssLast);
 			else if($iteration == 1) $tpe = array('cssFirst'=>$cssFirst, 'cssLast'=>'');
 			else $tpe = array('cssFirst'=>'', 'cssLast'=>'');
 			$phs = $this->prepareElementPlaceholders($el, '', $tpe);
-			$output .= $this->parseTpl($rowTpl, $phs);
+			$output .= $this->parseTpl($rowTpl, $phs, $el);
 			$iteration++;
 		}
 
-		return $this->parseTpl($outerTpl, array('childs' =>$output));
+		return $this->parseTpl($outerTpl, array('childs' =>$output), $this->dom['body']['elements'][$elementId]);
 	}
 
 	function prepareElementPlaceholders($el, $attr=array(), $tpe=array())
@@ -453,7 +392,6 @@ class ManagerTemplateEngine {
 		return array(
 			'id'=>$el['id'],
 			'target'=>$el['target'],
-			'unique'=>$el['unique'],
 			'attr'=>is_array($attr) ? array_merge($el['attr'], $attr) : $el['attr'],
 			'tpe'=>is_array($tpe) ? array_merge($el['tpe'], $tpe) : $el['tpe'],
 		);
@@ -484,11 +422,6 @@ class ManagerTemplateEngine {
 		return $output;
 	}
 
-	function mergeDomActionButtons($category)
-	{
-		return $this->mergeElement($category, 'buttons');
-	}
-
 	function mergeDomAlerts($outerTpl, $rowTpl)
 	{
 		$outerTpl = !empty($outerTpl) ? $outerTpl : 'alerts';
@@ -508,44 +441,43 @@ class ManagerTemplateEngine {
 		return $output;
 	}
 
-	function mergeDebugMsg()
-	{
-		$debug = '';
-		if($this->tpeOptions['echo_arrays'] || $this->tpeOptions['html_comments']) {
-			$debug = '<h2>dom</h2><pre style="font-size:12px;">'.print_r($this->dom,true).'</pre>'."\n";
-			$debug .= '<h2>typeDefaults</h2><pre style="font-size:12px;">'.print_r($this->typeDefaults,true).'</pre>'."\n";
-			$debug .= '<h2>debugMsg</h2><pre style="font-size:12px;">'.print_r($this->debugMsg,true).'</pre>'."\n";
-		}
-		if($this->tpeOptions['echo_arrays']) { echo $debug; exit; }
-		return $debug;
-	}
+	
 
-	function renderElementsRecursive($dom)
+	function renderBodyElementsRecursive($elementId, $recursive=true, $returnString=false)
 	{
 		global $modx;
 		
+		if(!isset($this->dom['body']['elements'][$elementId])) return sprintf('renderBodyElementsRecursive() : Element "%s" not found', $elementId);
+		
 		$output = array();
-
+		$childs = $this->dom['body']['childs'][$elementId];
+		$parents = $this->dom['body']['parents'][$elementId];
+		
 		$iteration = 1;
-		$total = count($dom);
-
+		$totalChilds = count($childs);
+		
 		// Sort-function to sort by 'order'
+		foreach($childs as $key=>$empty) {
+			$childs[$key] = array('order'=>$this->dom['body']['elements'][$key]['tpe']['order']);
+		}
 		if(!function_exists('cmp')) {
 			function cmp($a, $b) {
-				if ($a['tpe']['order'] == $b['tpe']['order']) {
+				if ($a['order'] == $b['order']) {
 					return 0;
 				}
 
-				return ($a['tpe']['order'] < $b['tpe']['order']) ? -1 : 1;
+				return ($a['order'] < $b['order']) ? -1 : 1;
 			}
 		}
-		uasort($dom,"cmp");
+		uasort($childs,"cmp");
 		
-		foreach($dom as $elId=>$el) {
-
+		foreach($childs as $childId=>$empty) {
+			
+			$el = $this->dom['body']['elements'][$childId];
+			
 			// Set first / last css-class
 			$tpe = array();
-			if($iteration === $total) $tpe = array('cssFirst'=>'','cssLast'=>isset($el['tpe']['cssLast']) ? $el['tpe']['cssLast'] : '');
+			if($iteration === $totalChilds) $tpe = array('cssFirst'=>'','cssLast'=>isset($el['tpe']['cssLast']) ? $el['tpe']['cssLast'] : '');
 			else if($iteration === 1) $tpe = array('cssFirst'=>isset($el['tpe']['cssFirst']) ? $el['tpe']['cssFirst'] : '','cssLast'=>'');
 			else $tpe = array('cssFirst'=>'', 'cssLast'=>'');
 			
@@ -553,58 +485,45 @@ class ManagerTemplateEngine {
 			$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
 
 			// Recursive part
-			if(!empty($el['childs'])) {
-				$recursive = array_merge($phs, $this->renderElementsRecursive($el['childs']));
+			if(!empty($this->dom['body']['childs'][$childId])) {
+				
+				$recursive = array_merge($phs, $this->renderBodyElementsRecursive($childId));
 
 				// Handle blockTpl for Grids
 				if(isset($el['tpe']['blockTpl'])) {
 					foreach($el['tpe']['blockTpl'] as $block=>$blockTpls) {
-						if(isset($recursive[$block]) && isset($blockTpls['outerTpl'])) $recursive[$block] = $this->parseTpl($blockTpls['outerTpl'], array_merge($phs, array('childs' =>$recursive[$block])));
+						if(isset($recursive[$block]) && isset($blockTpls['outerTpl'])) $recursive[$block] = $this->parseTpl($blockTpls['outerTpl'], array_merge($phs, array('childs' =>$recursive[$block])), $el);
 					}
 				}
 
 				if(isset($el['tpe']['innerTpl'])) {
-					$phs['childs'] = $this->parseTpl($el['tpe']['innerTpl'], $recursive);
+					$phs['childs'] = $this->parseTpl($el['tpe']['innerTpl'], $recursive, $el);
 				} else {
 					$phs = $recursive;
 				}
 			}
 			// Recursive part END
-
+			
+			$elementTpl = $el['tpe']['tpl'];
+			
 			// Prepare show_elements-mode
 			$fetch = '';
 			if($this->tpeOptions['show_elements']) {
-				$title  = 'id = '.$el['id'] ."\n";
-				$title .= 'type = '.$el['type'] ."\n\n";
-				if(isset($el['attr']) && !empty($el['attr'])) {
-					foreach ($el['attr'] as $param => $value) {
-						$truncated = (strlen($value) > 50) ? substr($value, 0, 50) . '...' : $value;
-						$title .= 'attr.' . $param . ' = ' . $truncated . "\n";
-					}
-					$title .= "\n";
+				$this->fetchTpl($elementTpl); // Prepare tags-array in $this->tplCache
+				// If [+debug+] does not exist in element-template, simply prepend element-info 
+				if(!in_array('debug', $this->tplCache[$elementTpl]['tags'])) {
+					$fetch .= $this->renderElementsDebugInfo($el);
 				} else {
-					$title .= 'No attributes found' . "\n\n";
+					$phs['debug'] = $this->renderElementsDebugInfo($el); // Provide info using template "debug.element"
+					$phs['debug_raw'] = $this->renderElementsDebugInfo($el, true); // Provide info without template
 				}
-				if(isset($el['tpe']) && !empty($el['tpe'])) {
-					foreach ($el['tpe'] as $param => $value) {
-						$truncated = (strlen($value) > 50) ? substr($value, 0, 50) . '...' : $value;
-						$title .= 'tpe.' . $param . ' = ' . $truncated . "\n";
-					}
-				} else {
-					$title .= 'No tpe-options found';
-				}
-				$debugPhs = array(
-					'target'=>$el['target'].'.'.$elId,
-					'title'=>htmlentities($title)
-				);
-				$fetch .= $this->parseTpl('debug.element', $debugPhs); 
 			};
 
 			// Handle prepend-parameter
 			if(isset($el['tpe']['prepend'])) $fetch .= $el['tpe']['prepend'] . "\n";
 			
 			// No more recursion / Render and return deepest child
-			$source = $this->parseTpl($el['tpe']['tpl'], $phs);
+			$source = $this->parseTpl($elementTpl, $phs, $el);
 			$source = $modx->parseManagerDocumentSource($source);
 			$fetch .= $source . "\n";
 			
@@ -613,23 +532,31 @@ class ManagerTemplateEngine {
 			
 			// Wrap element inside an outerTpl
 			if(isset($el['tpe']['outerTpl'])) {
-				$output[$pos] .= $this->parseTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs' =>$fetch))) . "\n";
+				$output[$pos] .= $this->parseTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs' =>$fetch)), $el) . "\n";
 			} else {
 				$output[$pos] .= $fetch;
 			}
 			$iteration++;
 		}
+		
+		// Render grand parent
+		if($returnString) {
+			$el = $this->dom['body']['elements'][$elementId];
+			$phs = $this->prepareElementPlaceholders($el);
+			$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
+			return $this->parseTpl($el['tpe']['tpl'], array_merge($phs, $output), $el) . "\n";
+		}
 
 		return $output;
 	}
 	
-	function parseTpl($tpl, $placeholders=array())
+	function parseTpl($tpl, $placeholders=array(), $el=array())
 	{
 		// Allow using snippets like [[mgrTpl]] in templates
 		// $source = $modx->parseManagerDocumentSource($source);
 		
 		$tplHtml = $this->fetchTpl($tpl);
-		return $this->parsePlaceholders($tplHtml, $placeholders);
+		return $this->parsePlaceholders($tplHtml, $placeholders, $el);
 	}
 
 	function fetchTpl($tpl)
@@ -651,24 +578,32 @@ class ManagerTemplateEngine {
 				$id = isset($placeholders['id']) ? $placeholders['id'] : '?';
 				if(empty($tpl)) $msg = sprintf('No template set for "%s.%s"', $target, $id);
 				else $msg = sprintf('Template-File %s not found for "%s.%s"', $tpl, $target, $id);
-				$this->debugMsg[] = $msg;
+				$this->debugMsg($msg);
 				return $msg;
 			}
 		}
 		return $template;
 	}
 
-	function parsePlaceholders($source, $placeholder=array(), $pastTags=array())
+	function parsePlaceholders($source, $placeholder=array(), $el=array(), $pastTags=array())
 	{
 		global $modx, $_lang, $_style;
 
-		$placeholder = array_merge($this->placeholders, $placeholder);
+		$thisPlaceholder = array_merge($this->placeholders, $placeholder);
 		$source = $modx->mergeSettingsContent($source);
 		$tags = $modx->getTagsFromContent($source);
 
 		if(!empty($tags)) {
 			foreach($tags[1] as $key=>$tag) {
 				$value = '';
+
+				if (substr($tag, 0, 7) == 'parent.') {
+					$dt = $this->getParentTagAndPlaceholder($tag, $el);
+					$tag = $dt['tag'];
+					$placeholder = array_merge($this->placeholders, $dt['placeholder']);
+				}
+				else $placeholder = $thisPlaceholder;
+				
 				if (substr($tag, 0, 5) == 'lang.') {
 					// Replace language
 					$langKey = substr($tag, 5);
@@ -681,6 +616,7 @@ class ManagerTemplateEngine {
 					// Replace attributes
 					$attrKey = substr($tag, 5);
 					$value = isset($placeholder['attr'][$attrKey]) ? $placeholder['attr'][$attrKey] : '';
+					if($attrKey == 'value') $value = $this->protectPlaceholders($value);
 				} else if (substr($tag, 0, 4) == 'tpe.') {
 					// Replace template-engine params
 					$tpeKey = substr($tag, 4);
@@ -699,8 +635,125 @@ class ManagerTemplateEngine {
 		// Recursive parsing
 		$tags = $modx->getTagsFromContent($source);
 		if(!empty($pastTags) && $tags === $pastTags) $source = 'parsePlaceholders(): Loop prevented with tags '.print_r($pastTags, true).$source;
-		else if(!empty($tags)) $source = $this->parsePlaceholders($source, $placeholder, $tags);
+		else if(!empty($tags)) $source = $this->parsePlaceholders($source, $placeholder, $el, $tags);
 
 		return $source;
+	}
+	
+	function getParentTagAndPlaceholder($tag, $el)
+	{
+		$elementId = $el['id'];
+		
+		// Loop down parent-tree like [+parent.parent.parent.id+]
+		while(substr($tag, 0, 7) == 'parent.') {
+			$tag = substr($tag, 7); // Remove first "parent."
+			
+			// Break loop to get first parent!
+			foreach($this->dom['body']['parents'][$elementId] as $elId=>$empty) { 
+				$elementId = $elId;
+				break; 
+			} 
+			
+		}
+		
+		$el = $this->dom['body']['elements'][$elementId];
+		$phs = $this->prepareElementPlaceholders($el);
+		
+		return array(
+			'tag'=>$tag,
+			'placeholder'=>$phs
+		);
+	}
+
+	function protectPlaceholders($value)
+	{
+		return str_replace(
+			array('[[',         ']]'),
+			array('<!--[-[',    ']-]-->'),
+			$value
+		);
+	}
+
+	function unprotectPlaceholders($value)
+	{
+		return str_replace(
+			array('<!--[-[',    ']-]-->'),
+			array('[[',         ']]'),
+			$value
+		);
+	}
+	
+	function debugMsg($msg)
+	{
+		if(!in_array($msg, $this->debugMsg)) $this->debugMsg[] = $this->debugSource.' - '.$msg;
+	}
+
+	function mergeDebugMsg()
+	{
+		$debug = '<hr/>';
+		if($this->tpeOptions['debug_info']) {
+			$debug .= '<h2>debugMsg</h2>'."\n";
+			$debug .= !empty($this->debugMsg) ? '<pre style="font-size:12px;">'.print_r($this->debugMsg,true).'</pre>' : 'No errors found.';
+			$debug .= '<h2>Elements-Matrix</h2>'."\n";
+			$debug .= $this->renderDebugElementsMatrixRecursive($this->dom['body']['childs']['body']);
+		}
+		if($this->tpeOptions['echo_arrays']) {
+			$debug = '<h2>dom</h2><pre style="font-size:12px;">'.print_r($this->dom,true).'</pre>'."\n";
+			$debug .= '<h2>typeDefaults</h2><pre style="font-size:12px;">'.print_r($this->typeDefaults,true).'</pre>'."\n";
+		}
+		if($this->tpeOptions['echo_arrays']) { echo $debug; exit; }
+		return $debug;
+	}
+	
+	function renderDebugElementsMatrixRecursive($childs)
+	{
+		$output = '<ul>';
+		foreach($childs as $childId=>$empty) {
+			$output .= '<li>';
+			$el = $this->dom['body']['elements'][$childId];
+			$output .= $this->renderElementsDebugInfo($el);
+			$output .= isset($this->dom['body']['childs'][$childId]) ? $this->renderDebugElementsMatrixRecursive($this->dom['body']['childs'][$childId]) : '';
+			$output .= '</li>';
+		}
+		$output .= '</ul>';
+		return $output;
+	}
+	
+	function renderElementsDebugInfo($el, $returnRaw=false)
+	{
+		$title  = 'id = '.$el['id'] ."\n";
+		$title .= 'type = '.$el['type'] ."\n\n";
+		if(isset($el['attr']) && !empty($el['attr'])) {
+			foreach ($el['attr'] as $param => $value) {
+				if(is_array($value)) {
+					$value = print_r($value, true);
+				}
+				$truncated = (strlen($value) > 50) ? substr($value, 0, 50) . '...' : $value;
+				$title .= 'attr.' . $param . ' = ' . $truncated . "\n";
+			}
+			$title .= "\n";
+		} else {
+			$title .= 'No attributes found' . "\n\n";
+		}
+		if(isset($el['tpe']) && !empty($el['tpe'])) {
+			foreach ($el['tpe'] as $param => $value) {
+				$truncated = (strlen($value) > 50) ? substr($value, 0, 50) . '...' : $value;
+				$title .= 'tpe.' . $param . ' = ' . $truncated . "\n";
+			}
+		} else {
+			$title .= 'No tpe-options found';
+		}
+		
+		$title = htmlentities($title);
+		$target = $el['target'] == 'body' ? $el['id'] : $el['target'];
+		
+		if($returnRaw) return $target."\n".$title;
+		
+		$debugPhs = array(
+			'target'=>$target,
+			'title'=>$title
+		);
+		
+		return $this->parseTpl('debug.element', $debugPhs);
 	}
 }

@@ -1,4 +1,10 @@
-<input id="[+id+]" name="[+attr.name+]" class="DatePicker" value="[+attr.value+]" onblur="[+attr.onblur+]" [+attr.manual+] />
-<a href="javascript:void(0);" onclick="javascript:document.mutate.[+attr.name+].value=''; return true;" onmouseover="window.status='[+lang.remove_date+]'; return true;" onmouseout="window.status=''; return true;" style="cursor:pointer; cursor:hand;">
-    <img src="[+style.icons_cal_nodate+]" width="16" height="16" border="0" alt="[+lang.remove_date+]" />
-</a>
+<div class="input-group col-md-3">
+    <input id="[+id+]" name="[+attr.name+]" class="DatePicker form-control" value="[+attr.value+]" onblur="[+attr.onblur+]" [+attr.manual+] />
+    <span class="input-group-btn">
+        <a class="btn btn-default" href="javascript:void(0);" onclick="javascript:document.mutate.[+attr.name+].value=''; return true;" onmouseover="window.status='[+lang.remove_date+]'; return true;" onmouseout="window.status=''; return true;" style="cursor:pointer; cursor:hand;">
+            <img src="[+style.icons_cal_nodate+]" width="16" height="16" border="0" alt="[+lang.remove_date+]" />
+        </a>
+    </span>
+</div>
+
+<p style="margin-top:10px;"><small>[+lang.datetime_format+] <em>[(datetime_format)] HH:MM:SS</em></small></p>

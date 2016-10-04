@@ -9,7 +9,7 @@
  * MODX version:   1.0.3
 */
 $style_path = 'media/style/' . $modx->config['manager_theme'] . '/images/';
-$modx->config['mgr_date_picker_path'] = sprintf('media/style/%s/moo-datepicker/datepicker.inc.php',$modx->config['manager_theme']);
+$modx->config['mgr_date_picker_path'] = sprintf('media/script/air-datepicker/datepicker.inc.php',$modx->config['manager_theme']);
 
 // Tree Menu Toolbar
 $_style['add_doc_tree']             = '<img src="'.$style_path.'icons/folder_page_add.png" style="width:16px; height:16px" />';

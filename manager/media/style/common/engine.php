@@ -15,7 +15,7 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 
 ->setTypeDefaults('action.buttons',	    array('tpl'=>'action.buttons'))
 ->setTypeDefaults('action.button',	    array('tpl'=>'action.button'))
-->setTypeDefaults('action.select',	    array('tpl'=>'action.select'))
+->setTypeDefaults('action.select',	    array('tpl'=>'action.select', 'class'=>'inputBox'))
 ->setTypeDefaults('form', 			    array('tpl'=>'form'))
 ->setTypeDefaults('form.splitter',	    array('tpl'=>'form.splitter',           'outerTpl'=>'form.table.row.colspan'))
 ->setTypeDefaults('form.spacer',	    array('tpl'=>'form.spacer',             'outerTpl'=>'form.table.row.colspan'))
@@ -45,7 +45,7 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 ->setTypeDefaults('raw',	 		    array('tpl'=>'raw'))
 
 // Prepare main-buttons
-->setButton('action.buttons', 'main', '');
+->setElement('action.buttons', 'actions', array(), array());
 ;  
 
 if(isset($_REQUEST['r'])) $this->setPlaceholder('doRefresh', 'doRefresh("'. $_REQUEST['r'] .'");');
