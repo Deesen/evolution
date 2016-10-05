@@ -152,6 +152,7 @@ a.panel-title:focus { color:#000; text-decoration: none; }
     }
     .navbar-nav .btn-group-responsive.open .dropdown-menu li a {
         color:#fff;
+        text-align: center;
     }
     .navbar-nav .btn-group-responsive.open .dropdown-menu li a:hover {
         color:#000;
