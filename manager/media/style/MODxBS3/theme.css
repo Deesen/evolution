@@ -122,6 +122,9 @@ a.panel-title:focus { color:#000; text-decoration: none; }
 .navbar-toggle { border-color:#fff; }
 .navbar-toggle .icon-bar { background-color:#fff; }
 
+.navbar-fixed-bottom .navbar-collapse,
+.navbar-fixed-top .navbar-collapse { max-height:100vh; }
+
 @media (max-width:767px){
     .btn-group-responsive {
         display: table;
