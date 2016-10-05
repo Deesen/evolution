@@ -827,6 +827,14 @@ if ($modx->hasPermission('edit_doc_metatags') && $modx->config['show_meta']) {
 
 $tpe->setElement('input', 'mutate.save', array('name'=>'save', 'type'=>'submit'));
 
+// invoke OnDocFormRender event
+$evtOut = $modx->invokeEvent('OnDocFormRender', array(
+	'id' => $id,
+	'template' => $content['template']
+));
+if(is_array($evtOut)) $evtOut = implode('', $evtOut);
+if(!empty($evtOut)) $tpe->setElement('raw', 'mutate.OnDocFormRender', array('content'=>$evtOut));
+
 };
 
 // Output 
