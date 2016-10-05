@@ -156,7 +156,7 @@ if (isset ($_POST['which_editor'])) {
 }
 
 // Template engine - Prepare action-buttons
-$tpe->setElement('action.button', 'actions.Button1', array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.mutate.save.click();'), array('class'=>'transition'));
+$tpe->setElement('action.button', 'actions.Button1', array('label'=>$_lang['save'], 'icon'=>$_style["icons_save"], 'href'=>'javascript:void(0)','onclick'=>'documentDirty=false; document.mutate.save.click();'), array('class'=>'primary'));
 $tpe->setElement('action.select', 'actions.Button1.stay', array('name'=>'stay', 'manual'=>'form="mutate"', 'value'=>$_REQUEST['stay']));   // Hide from output
 if ($modx->hasPermission('new_document')) {
 	$tpe->setElement('select.option', 'actions.Button1.stay.stay1', array('value'=>'1', 'label'=>$_lang['stay_new'], 'selected'=>$_REQUEST['stay']=='1' ? ' selected="selected"' : ''));
@@ -173,10 +173,10 @@ if ($_REQUEST['a'] == '4' || $_REQUEST['a'] == '72') {
 }
 
 $onclick = $id==0 ? "document.location.href='index.php?a=2';" : "document.location.href='index.php?a=3&amp;id=$id".htmlspecialchars($add_path)."';";
-$tpe->setElement('action.button', 'actions.Button4', array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"], 'href'=>'#','onclick'=>'documentDirty=false;'.$onclick), array('class'=>'transition'));
+$tpe->setElement('action.button', 'actions.Button4', array('label'=>$_lang['cancel'], 'icon'=>$_style["icons_cancel"], 'href'=>'#','onclick'=>'documentDirty=false;'.$onclick), array());
 
 $onclick = "window.open('".$modx->makeUrl($id)."','previeWin');";
-$tpe->setElement('action.button', 'actions.Button5', array('label'=>$_lang['preview'], 'icon'=>$_style["icons_preview_resource"], 'href'=>'#','onclick'=>'documentDirty=false;'.$onclick), array('class'=>'transition'));
+$tpe->setElement('action.button', 'actions.Button5', array('label'=>$_lang['preview'], 'icon'=>$_style["icons_preview_resource"], 'href'=>'#','onclick'=>'documentDirty=false;'.$onclick), array());
 
 // Prepare Javascript-Object for transferring parameters
 $modx_params = json_encode(array(
@@ -203,6 +203,7 @@ $modx_params = json_encode(array(
 $tpe->registerHeadScriptFromFile('mutate_content.dynamic', 'media/script/actions/mutate_content.dynamic.js', array('modx_params'=>$modx_params));
 
 // Create Form
+$tpe->setPlaceholder('main_form', 'mutate');
 $tpe->setElement('form', 'mutate', array('name'=>'mutate', 'action'=>'index.php', 'method'=>'post', 'enctype'=>'enctype="multipart/form-data"', 'onsubmit'=>'documentDirty=false;'), array('class'=>'content'));
 
 $evtOut = $modx->invokeEvent('OnDocFormPrerender', array(

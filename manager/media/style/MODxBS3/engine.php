@@ -17,6 +17,8 @@ $this->registerCssSrc('main',           'media/style/common/bootstrap/css/bootst
 // Bootstrap3 injected Javascript - allows use of MODX-placeholders
 // ->registerHeadScriptFromFile('modx_jq','media/script/manager.js')
 
+->setTypeDefaults('action.button',	    array('tpl'=>'action.button', 'class'=>'default'))
+->setTypeDefaults('action.select',	    array('tpl'=>'action.select', 'class'=>'default'))
 ->setTypeDefaults('section', 		    array('tpl'=>'form.section', 'innerTpl'=>'form.table', 'collapsed'=>'in'))
 ->setTypeDefaults('section.blank',	    array('tpl'=>'form.section', 'innerTpl'=>'form.table', 'collapsed'=>'in'))
 

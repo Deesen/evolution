@@ -299,6 +299,7 @@ switch ($action) {
 /********************************************************************/
 	case 85:
 		// get the mutate page for adding a folder
+		ob_start(); // Necessary for template-engine
 		include_once(includeFileProcessor("actions/mutate_content.dynamic.php",$manager_theme));
 	break;
 	case 27:
@@ -308,6 +309,7 @@ switch ($action) {
 	break;
 	case 4:
 		// get the mutate page for adding content
+		ob_start(); // Necessary for template-engine
 		include_once(includeFileProcessor("actions/mutate_content.dynamic.php",$manager_theme));
 	break;
 	case 5:
@@ -804,6 +806,7 @@ switch ($action) {
 /********************************************************************/
 	case 72:
 		// get the weblink page
+		ob_start(); // Necessary for template-engine
 		include_once(includeFileProcessor("actions/mutate_content.dynamic.php",$manager_theme));
 	break;
 /********************************************************************/

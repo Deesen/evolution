@@ -8,17 +8,16 @@
         </ul>
         
         <!-- Dynamically handle Stay-Options for Save-Button -->
-        <input name="[+attr.name+]" type="hidden" value="[+attr.value+]" form="mutate" />
+        <input name="[+attr.name+]" type="hidden" value="[+attr.value+]" form="[+main_form+]" />
         <script>
             jQuery('.dropdown-menu a').click(function(){
                 document.mutate.[+attr.name+].value = jQuery(this).data('value');
-                jQuery('#selected_[+parent.id+]').text(jQuery(this).text());
+                jQuery('#selected_[+parent.id+]').text(' + '+ jQuery(this).text());
+                jQuery( "#[+parent.id+]" ).trigger( "click" );
             });
             jQuery( document ).ready(function() {
                 var stay = document.mutate.[+attr.name+].value == 0 ? 3 : document.mutate.[+attr.name+].value;
-                jQuery('#selected_[+parent.id+]').text(
-                    jQuery('#stay'+stay).text()
-                );
+                jQuery('#selected_[+parent.id+]').text(' + '+ jQuery('#stay'+stay).text());
             });
         </script>
     

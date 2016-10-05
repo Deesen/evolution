@@ -114,6 +114,11 @@ a.panel-title:focus { color:#000; text-decoration: none; }
 .navbar-modx .navbar-nav.navbar-right > li > .btn-group > a.btn:focus{
     background-color: #305269;
 }
+
+.navbar-modx .navbar-nav > li.primary > .btn-group > a.btn { background-color: #006551; }
+.navbar-modx .navbar-nav > li.primary > .btn-group > a.btn:hover,
+.navbar-modx .navbar-nav > li.primary > .btn-group > a.btn:focus { background-color: #1ABC9C;; }
+
 .navbar-toggle { border-color:#fff; }
 .navbar-toggle .icon-bar { background-color:#fff; }
 
