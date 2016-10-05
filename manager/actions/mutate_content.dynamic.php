@@ -261,7 +261,7 @@ if ($modx->config['use_breadcrumbs']) {
 	$tpe->setPlaceholder('breadcrumbs', $breadcrumbs);
 }
 
-$tpe->setElement('tabpane',	'mutate.documentPane', array('label'=>$_lang['change_password']));
+$tpe->setElement('tabpane',	'mutate.documentPane', array('object_id'=>'tpSettings'));
 
 $evtOut = $modx->invokeEvent('OnDocFormTemplateRender', array(
 	'id' => $id
@@ -269,7 +269,7 @@ $evtOut = $modx->invokeEvent('OnDocFormTemplateRender', array(
 
 if (is_array($evtOut)) $tpe->setElement('raw', 'mutate.documentPane.OnDocFormTemplateRender', array('content'=>implode('', $evtOut)));
 else {
-// $tpe->setElement('section', 'section1', 'mutate.documentPane.tab1', array('label' => $_lang['change_password']));
+
 $tpe->setElement('tab',           'mutate.documentPane.tabGeneral', 	                 array('label'=>$_lang['settings_general']));
 $tpe->setElement('section.blank', 'mutate.documentPane.tabGeneral.tg_section1',             array('label'=>$_lang['settings_general']), array() );
 $tpe->setElement('input.text',    'mutate.documentPane.tabGeneral.tg_section1.pagetitle',   array('name'=>'pagetitle', 'onchange'=>'documentDirty=true;', 'manual'=>'maxlength="255" spellcheck="true"',

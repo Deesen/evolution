@@ -1,7 +1,7 @@
     <!-- [+label+] -->
-    <div class="tab-page" id="tab_[+id+]">
+    <div class="tab-page" id="[+id+]">
         <h2 class="tab">[+attr.label+]</h2>
-        <script type="text/javascript">tpResources.addTabPage( document.getElementById( "tab_[+id+]" ) );</script>
+        <script type="text/javascript">[+parent.attr.object_id+].addTabPage( document.getElementById( "[+id+]" ) );</script>
     
         [+childs+]
         
