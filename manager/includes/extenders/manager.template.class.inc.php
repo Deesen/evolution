@@ -283,7 +283,6 @@ class ManagerTemplateEngine {
 			// Add internal params
 			array(
 				'order'=>count($dom['childs'][$parent]),
-				'unique'=>md5($target),
 			),
 			$tpe
 		);
@@ -702,7 +701,7 @@ class ManagerTemplateEngine {
 			$debug .= '<h2>typeDefaults</h2><pre style="font-size:12px;">'.print_r($this->typeDefaults,true).'</pre>'."\n";
 		}
 		if($this->tpeOptions['echo_arrays']) { echo $debug; exit; }
-		return $debug;
+		return '<div class="debug">'. $debug. '</div>';
 	}
 	
 	function renderDebugElementsMatrixRecursive($childs)

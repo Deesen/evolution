@@ -3,7 +3,8 @@
 .hide {display:block!important}
 
 
-body { background: #f5f5f5 url(images/subnav.jpg) !important; }
+body { background-color: #353D47; }
+.debug { color:#fff; }
 
 #loadingmask {
     display: none !important;
