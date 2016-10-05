@@ -242,6 +242,14 @@ class ManagerTemplateEngine {
 			$this->debugMsg(sprintf('Tpe not passed as array for "%s"', $target));
 		}
 		
+		// Protect placeholders
+		if(isset($tpe['protect_phs'])) {
+			$pphs = explode(',', $tpe['protect_phs']);
+			foreach($pphs as $i=>$ph) {
+				if(isset($attr[$ph])) $attr[$ph] = $this->protectPlaceholders($attr[$ph]);
+			}
+		}
+		
 		// Determine parents and element-id
 		$parentsExp = explode( '.', $target );
 		$elementId = array_pop($parentsExp);   // Get last element as ID and remove it
@@ -667,8 +675,8 @@ class ManagerTemplateEngine {
 	function protectPlaceholders($value)
 	{
 		return str_replace(
-			array('[[',         ']]'),
-			array('<!--[-[',    ']-]-->'),
+			array('[[',         ']]',       '[+',       '+]'),
+			array('<!--[-[',    ']-]-->',   '<!--[-+',   '+-]-->'),
 			$value
 		);
 	}
@@ -676,8 +684,8 @@ class ManagerTemplateEngine {
 	function unprotectPlaceholders($value)
 	{
 		return str_replace(
-			array('<!--[-[',    ']-]-->'),
-			array('[[',         ']]'),
+			array('<!--[-[',    ']-]-->',   '<!--[-+',   '+-]-->'),
+			array('[[',         ']]',       '[+',       '+]'),
 			$value
 		);
 	}

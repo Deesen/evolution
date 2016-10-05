@@ -267,7 +267,7 @@ $evtOut = $modx->invokeEvent('OnDocFormTemplateRender', array(
 	'id' => $id
 ));
 
-if (is_array($evtOut)) $tpe->setElement('raw', 'mutate.documentPane.OnDocFormTemplateRender', array('content'=>implode('', $evtOut)));
+if (is_array($evtOut)) $tpe->setElement('raw', 'mutate.documentPane.OnDocFormTemplateRender', array('content'=>implode('', $evtOut)), array('protect_phs'=>'content'));
 else {
 
 $tpe->setElement('tab',           'mutate.documentPane.tabGeneral', 	                 array('label'=>$_lang['settings_general']));
@@ -833,7 +833,7 @@ $evtOut = $modx->invokeEvent('OnDocFormRender', array(
 	'template' => $content['template']
 ));
 if(is_array($evtOut)) $evtOut = implode('', $evtOut);
-if(!empty($evtOut)) $tpe->setElement('raw', 'mutate.OnDocFormRender', array('content'=>$evtOut));
+if(!empty($evtOut)) $tpe->setElement('raw', 'mutate.OnDocFormRender', array('content'=>$evtOut), array('protect_phs'=>'content')); // Codemirror-Script contains [+ and +] so protect them
 
 };
 
