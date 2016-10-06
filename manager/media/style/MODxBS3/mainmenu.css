@@ -1,0 +1,10 @@
+.nav.nav-tabs li a { background-color:#85630F; color:#fff; }
+.nav.nav-tabs li a:hover,
+.nav.nav-tabs li a:focus { background-color:#ffb400; color:#fff; }
+.nav.nav-tabs li.active a,
+.nav.nav-tabs li.active a:hover { background-color: #a9830f; }
+.tab-content { padding:0; background-color:#ffb400; }
+.tabs-affix-outer { min-height:0; }
+.nav > li > a { padding:7px 0; }
+.nav-tabs.nav-justified > li { border-bottom:1px solid #a9830f; }
+.nav-tabs.nav-justified > li > a { border-left:1px solid #a9830f; }

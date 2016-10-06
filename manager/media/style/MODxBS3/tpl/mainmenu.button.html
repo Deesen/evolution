@@ -1,8 +1,1 @@
-<li id="[+id+]">
-    <a href="[+attr.href+]" alt="[+attr.alt+]" target="[+attr.target+]" onclick="[+attr.onclick+]" class="" [+attr.manual+]>[+attr.label+]</a>
-    [[if?&is=`[+childs+]|||!empty`&separator=`|||`&then=`
-    <ul class="subnav">
-        [+childs+]
-    </ul>
-    `]]
-</li>
+<li role="presentation" class="[+tpe.cssFirst+]"><a href="[+attr.href+]" alt="[+attr.alt+]" aria-controls="[+id+]" target="[+attr.target+]" onclick="[+attr.onclick+]" class="" [+attr.manual+]>[+attr.label+]</a></li>

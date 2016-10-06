@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="[(modx_lang_attribute)]" dir="[+modx_textdir+]">
+<head>
+    <title>[+title+]</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=[+modx_manager_charset+]" />
+    [+tpe.head.css+]
+    [+tpe.head.javascript+]
+</head>
+<body ondragstart="return false"[+modx_textdir_class+]>
+[+preloader+]
+
+[[mgrTpl?&get=`elements` &element=`actions` &noChildsReturnEmpty=`1`]]
+
+<div class="container-fluid no-padding">
+    [[mgrTpl?&get=`alerts`]]
+    [+tpe.body+]
+</div>
+
+[+tpe.debug+]
+[+tpe.footer+]
+</body>
+</html>

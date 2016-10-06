@@ -21,5 +21,6 @@ $this->registerCssSrc('main',           'media/style/common/bootstrap/css/bootst
 ->setTypeDefaults('action.select',	    array('tpl'=>'action.select', 'class'=>'default'))
 ->setTypeDefaults('section', 		    array('tpl'=>'form.section', 'innerTpl'=>'form.table', 'collapsed'=>'in'))
 ->setTypeDefaults('section.blank',	    array('tpl'=>'form.section', 'innerTpl'=>'form.table', 'collapsed'=>'in'))
-
+->setTypeDefaults('mainmenu.category', 	array('tpl'=>'mainmenu.category', 'innerTpl'=>'tab.nav.list', 'cssFirst'=>'in active'))
+->setTypeDefaults('mainmenu.button',	array('tpl'=>'mainmenu.button'))
 ;

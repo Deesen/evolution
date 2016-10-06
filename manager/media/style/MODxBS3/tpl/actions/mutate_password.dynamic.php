@@ -16,6 +16,6 @@
     <br/>
 </div>
 [[mgrTpl?
-    &get=`element`
+    &get=`elements`
     &element=`userform`
 ]]
