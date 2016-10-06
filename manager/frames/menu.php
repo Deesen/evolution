@@ -6,8 +6,8 @@ if (!array_key_exists('mail_check_timeperiod', $modx->config) || !is_numeric($mo
 
 // Prepare template-engine
 $tpe =& $modx->manager->tpe;
-$tpe->setTpeOption('debug_info', false)
-->setActionTemplate('mainmenu')
+
+$tpe->setActionTemplate('mainmenu')
 ->setPlaceholder('tocTextRTL', $modx_textdir ? ' class="tocTextRTL"' : '')
 ->setPlaceholder('username', $modx->getLoginUserName())
 ->setPlaceholder('change_password', ($modx->hasPermission('change_password') ? ' <a onclick="this.blur();" href="index.php?a=28" target="main">'.$_lang['change_password'].'</a>'."\n" : "\n"))

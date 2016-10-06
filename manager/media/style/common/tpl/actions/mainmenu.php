@@ -24,10 +24,12 @@
 	<input type="hidden" name="sessToken" id="sessTokenInput" value="[+sessTokenInput+]" />
 	<div id="Navcontainer">
 		<div id="divNav">
-			[[mgrTpl?
-				&get=`elements`
-				&element=`mainmenu`
-			]]
+			<ul id="nav" class="nav">
+				[[mgrTpl?
+					&get=`elements`
+					&element=`mainmenu`
+				]]
+			</ul>
 		</div>
 	</div>
 </form>

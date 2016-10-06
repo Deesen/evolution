@@ -1,3 +1,8 @@
-<ul id="[+id+]" class="[+tpe.class+]">
-    [+childs+]
-</ul>
+<li id="[+id+]" class="[+tpe.li_class+]">
+    <a href="[+attr.href+]" alt="[+attr.alt+]" target="[+attr.target+]" onclick="[+attr.onclick+]" class="[+tpe.a_class+]" [+attr.manual+]>[+attr.label+]</a>
+    [[if?&is=`[+childs+]|||!empty`&separator=`|||`&then=`
+    <ul class="subnav">
+        [+childs+]
+    </ul>
+    `]]
+</li>

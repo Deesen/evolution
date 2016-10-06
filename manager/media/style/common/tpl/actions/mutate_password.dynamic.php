@@ -2,7 +2,7 @@
     <p>[+lang.change_password_message+]</p>
     <br/>
 	[[mgrTpl?
-		&get=`element`
+		&get=`elements`
 		&element=`userform`
 	]]
 </div>

@@ -1,7 +1,7 @@
 <div class="sectionBody">
 	[+breadcrumbs+]
 	[[mgrTpl?
-		&get=`element`
+		&get=`elements`
 		&element=`mutate`
 	]]
 </div>

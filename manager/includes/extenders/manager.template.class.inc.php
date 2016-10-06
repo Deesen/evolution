@@ -4,12 +4,14 @@ if(IN_MANAGER_MODE!="true") die("<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please
 class ManagerTemplateEngine {
 
 	var $tpeOptions = array(
-		'debug_info'=>true,     // show output + debug-info
+		'debug_info'=>false,     // show output + debug-info
+		'debug_info'=>false,     // show output + debug-info
 		'show_elements'=>false, // echo element-ids
 		'echo_arrays'=>false,   // echo only arrays
 	);
 	var $actionTpl = '';
 	var $actionTplHtml = '';
+	var $bodyTpl = 'body';
 	var $dom = array();
 	var $placeholders = array();
 	var $tplCache = array();
@@ -80,6 +82,11 @@ class ManagerTemplateEngine {
 	function setActionTemplate($tpl) {
 		$this->actionTpl = $tpl;
 		$this->tpeActive = true;
+		return $this;
+	}
+
+	function setBodyTemplate($tpl) {
+		$this->bodyTpl = $tpl;
 		return $this;
 	}
 	
@@ -373,16 +380,16 @@ class ManagerTemplateEngine {
 		$evtOut = $modx->invokeEvent('OnManagerMainFrameHeaderHTMLBlock');
 		$this->dom['head']['OnManagerMainFrameHeaderHTMLBlock'] = is_array($evtOut) ? implode("\n", $evtOut) : '';
 
-		$placeholders = array(
-			'tpe'=>array(
-				'head.css'=>$this->mergeDomCss(),
-				'head.javascript'=>$this->mergeDomJs('head'),
-				'body'=>$actionHtml, // Get output i.e. from actions/mutate_content.dynamic.php
-				'debug'=>$this->mergeDebugMsg(),
-				'footer'=>$tpeFooter
-			));
+		$placeholders = array();
+		$placeholders['tpe'] = array(
+			'head.css'=>$this->mergeDomCss(),
+			'head.javascript'=>$this->mergeDomJs('head'),
+			'body'=>$actionHtml, // Get output i.e. from actions/mutate_content.dynamic.php
+			'debug'=>$this->mergeDebugMsg(),
+			'footer'=>$tpeFooter
+		);
 		
-		$source = $this->fetchTpl('body');
+		$source = $this->fetchTpl($this->bodyTpl);
 		$source = $modx->parseManagerDocumentSource($source);   // Render snippets before replacing [+tpe.content+] which can contain "[[...]]" (Codemirror Javascript)
 		$source = $this->parsePlaceholders($source, $placeholders);
 		$source = $this->unprotectPlaceholders($source);
@@ -393,24 +400,25 @@ class ManagerTemplateEngine {
 	function mergeElementsList($elementId, $depth, $outerTpl, $rowTpl, $cssFirst='', $cssLast='')
 	{
 		$output = '';
-
-		$childs = $this->dom['body']['childs'][$elementId];
-
-		// @todo: Use "depth"-param
 		
-		$iteration = 1;
-		$total = count($childs);
-		foreach($childs as $elId=>$empty) {
-			$el = $this->dom['body']['elements'][$elId];
-			$tpe = array();
-			if($iteration == $total) $tpe = array('cssFirst'=>'','cssLast'=>$cssLast);
-			else if($iteration == 1) $tpe = array('cssFirst'=>$cssFirst, 'cssLast'=>'');
-			else $tpe = array('cssFirst'=>'', 'cssLast'=>'');
-			$phs = $this->prepareElementPlaceholders($el, '', $tpe);
-			$output .= $this->parseTpl($rowTpl, $phs, $el);
-			$iteration++;
-		}
+		if(isset($this->dom['body']['childs'][$elementId])) {
+			$childs = $this->dom['body']['childs'][$elementId];
 
+			// @todo: Use "depth"-param
+
+			$iteration = 1;
+			$total     = count($childs);
+			foreach ($childs as $elId => $empty) {
+				$el  = $this->dom['body']['elements'][$elId];
+				$tpe = array();
+				if ($iteration == $total) $tpe = array('cssFirst' => '', 'cssLast' => $cssLast);
+				else if ($iteration == 1) $tpe = array('cssFirst' => $cssFirst, 'cssLast' => '');
+				else $tpe = array('cssFirst' => '', 'cssLast' => '');
+				$phs = $this->prepareElementPlaceholders($el, '', $tpe);
+				$output .= $this->parseTpl($rowTpl, $phs, $el);
+				$iteration++;
+			}
+		}
 		return $this->parseTpl($outerTpl, array('childs' =>$output), $this->dom['body']['elements'][$elementId]);
 	}
 
@@ -470,7 +478,7 @@ class ManagerTemplateEngine {
 
 	
 
-	function renderBodyElementsRecursive($elementId, $recursive=true, $returnString=false, $noChildsReturnEmpty=false)
+	function renderBodyElementsRecursive($elementId, $renderRecursive=true, $returnString=false, $noChildsReturnEmpty=false)
 	{
 		global $modx;
 		
@@ -483,7 +491,7 @@ class ManagerTemplateEngine {
 		$iteration = 1;
 		$totalChilds = count($childs);
 		
-		if($childs) {
+		if($childs && $renderRecursive) {
 			// Sort-function to sort childs by 'tpe.order'
 			foreach ($childs as $key => $empty) {
 				$childs[$key] = array('order' => $this->dom['body']['elements'][$key]['tpe']['order']);
@@ -654,12 +662,18 @@ class ManagerTemplateEngine {
 					// Replace template-engine params
 					$tpeKey = substr($tag, 4);
 					$value = isset($placeholder['tpe'][$tpeKey]) ? $placeholder['tpe'][$tpeKey] : '';
+				} else if (substr($tag, 0, 3) == 'el.') {
+					// Replace template-engine params
+					$element = substr($tag, 3);
+					$value = $this->test;
 				} else if(isset($placeholder[$tag])){
 					// Parse normal placeholders
+					/*
 					if($tag == 'id' && isset($placeholder['attr']['id'])) {
 						$value = $placeholder['attr']['id'];
 					}
-					else $value = $placeholder[$tag];
+					
+					else*/ $value = $placeholder[$tag];
 				} else {
 					// Merge elements like [+userform+], [+userform.section+]
 					// $value = $this->mergeElement($tag);
@@ -689,7 +703,6 @@ class ManagerTemplateEngine {
 				$elementId = $elId;
 				break; 
 			} 
-			
 		}
 		
 		$el = $this->dom['body']['elements'][$elementId];

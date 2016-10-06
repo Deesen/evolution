@@ -21,7 +21,7 @@ class EVOmenu{
 			// Prepare root-element
 			global $modx;
 			$tpe =& $modx->manager->tpe;
-			$tpe->setElement('mainmenu.category', 'mainmenu', array('id' => 'nav'), array('class' => 'nav'));
+			$tpe->setElement('root', 'mainmenu', array('id' => 'nav'), array('class' => 'nav'));
 
 			$this->setTpeElementsRecursive('main');
 		} else {
@@ -56,7 +56,7 @@ class EVOmenu{
 			$parent = $value[1];
 			$tpeType = $parent == 'main' ? 'category' : 'button';
 			
-			$tpe->setElement('mainmenu.button',
+			$tpe->setElement('mainmenu.'.$tpeType,
 				'mainmenu'. ($parent == 'main' ? '' : '.'.$parent) .'.'.$id,
 				array(
 					'label'=>$value[2] . $this->getItemName($id),

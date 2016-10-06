@@ -43,7 +43,7 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 ->setTypeDefaults('grid.2col', 		    array('tpl'=>'grid.2columns'))
 ->setTypeDefaults('grid.3col', 		    array('tpl'=>'grid.3columns'))
 ->setTypeDefaults('raw',	 		    array('tpl'=>'raw'))
-->setTypeDefaults('mainmenu.category',  array('tpl'=>'mainmenu.category'))
+->setTypeDefaults('mainmenu.category',  array('tpl'=>'mainmenu.button'))
 ->setTypeDefaults('mainmenu.button',    array('tpl'=>'mainmenu.button'))
 
 ->setTypeDefaults('root',	 		    array('tpl'=>'root'))
