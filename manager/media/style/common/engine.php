@@ -43,9 +43,17 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 ->setTypeDefaults('grid.2col', 		    array('tpl'=>'grid.2columns'))
 ->setTypeDefaults('grid.3col', 		    array('tpl'=>'grid.3columns'))
 ->setTypeDefaults('raw',	 		    array('tpl'=>'raw'))
+->setTypeDefaults('mainmenu.category',  array('tpl'=>'mainmenu.category'))
+->setTypeDefaults('mainmenu.button',    array('tpl'=>'mainmenu.button'))
+
+->setTypeDefaults('root',	 		    array('tpl'=>'root'))
 
 // Prepare main-buttons
-->setElement('action.buttons', 'actions', array(), array());
+->setElement('action.buttons', 'actions', array(), array())
+
+// Set default placeholders
+->setPlaceholder('preloader','<div id="preLoader"><table width="100%" border="0" cellpadding="0"><tr><td align="center"><div class="preLoaderText">[+style.ajax_loader+]</div></td></tr></table></div>')
+
 ;  
 
 if(isset($_REQUEST['r'])) $this->setPlaceholder('doRefresh', 'doRefresh("'. $_REQUEST['r'] .'");');

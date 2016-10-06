@@ -82,6 +82,13 @@ class ManagerTemplateEngine {
 		$this->tpeActive = true;
 		return $this;
 	}
+	
+	function setTpeOption($param, $value) {
+		if(isset($this->tpeOptions[$param])) {
+			$this->tpeOptions[$param] = $value;
+		}
+		return $this;
+	}
 
 	function alert($message, $class='info') {
 		$this->dom['alerts'][$class][] = $message;
@@ -117,15 +124,28 @@ class ManagerTemplateEngine {
 		return $this->registerScriptFromFile($id, $file, $placeholder, 'footer');
 	}
 
-	function registerScriptFromFile($id, $file, $placeholder, $category) {
-		// if file_exists()
-		$script = file_get_contents(MODX_MANAGER_PATH.$file);
-		$script = $this->parsePlaceholders($script, $placeholder);
+	function registerScriptFromFile($id, $file, $placeholder, $category)
+	{
+		if(is_null($file)) {
+			$this->dom[$category]['js'][$id] = array(
+				'script' => '',
+				'file'   => NULL
+			);
+		} else {
+			$scriptFile = MODX_MANAGER_PATH . $file;
+			if ($file && is_readable($scriptFile)) {
+				$script = file_get_contents($scriptFile);
+				$script = $this->parsePlaceholders($script, $placeholder);
 
-		$this->dom[$category]['js'][$id] = array(
-			'script'=>$script,
-			'file'=>$file
-		);
+				$this->dom[$category]['js'][$id] = array(
+					'script' => $script,
+					'file'   => $file
+				);
+			}
+			else {
+				$this->debugMsg(sprintf('registerScriptFromFile() : File not found -&gt;', $file));
+			}
+		}
 		return $this;
 	}
 
@@ -450,7 +470,7 @@ class ManagerTemplateEngine {
 
 	
 
-	function renderBodyElementsRecursive($elementId, $recursive=true, $returnString=false)
+	function renderBodyElementsRecursive($elementId, $recursive=true, $returnString=false, $noChildsReturnEmpty=false)
 	{
 		global $modx;
 		
@@ -463,87 +483,93 @@ class ManagerTemplateEngine {
 		$iteration = 1;
 		$totalChilds = count($childs);
 		
-		// Sort-function to sort by 'order'
-		foreach($childs as $key=>$empty) {
-			$childs[$key] = array('order'=>$this->dom['body']['elements'][$key]['tpe']['order']);
-		}
-		if(!function_exists('cmp')) {
-			function cmp($a, $b) {
-				if ($a['order'] == $b['order']) {
-					return 0;
-				}
-
-				return ($a['order'] < $b['order']) ? -1 : 1;
+		if($childs) {
+			// Sort-function to sort childs by 'tpe.order'
+			foreach ($childs as $key => $empty) {
+				$childs[$key] = array('order' => $this->dom['body']['elements'][$key]['tpe']['order']);
 			}
-		}
-		uasort($childs,"cmp");
-		
-		foreach($childs as $childId=>$empty) {
-			
-			$el = $this->dom['body']['elements'][$childId];
-			
-			// Set first / last css-class
-			$tpe = array();
-			if($iteration === $totalChilds) $tpe = array('cssFirst'=>'','cssLast'=>isset($el['tpe']['cssLast']) ? $el['tpe']['cssLast'] : '');
-			else if($iteration === 1) $tpe = array('cssFirst'=>isset($el['tpe']['cssFirst']) ? $el['tpe']['cssFirst'] : '','cssLast'=>'');
-			else $tpe = array('cssFirst'=>'', 'cssLast'=>'');
-			
-			$phs = $this->prepareElementPlaceholders($el, '', $tpe);
-			$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
+			if (!function_exists('cmp')) {
+				function cmp($a, $b) {
+					if ($a['order'] == $b['order']) {
+						return 0;
+					}
 
-			// Recursive part
-			if(!empty($this->dom['body']['childs'][$childId])) {
-				
-				$recursive = array_merge($phs, $this->renderBodyElementsRecursive($childId));
+					return ($a['order'] < $b['order']) ? -1 : 1;
+				}
+			}
+			uasort($childs, "cmp");
 
-				// Handle blockTpl for Grids
-				if(isset($el['tpe']['blockTpl'])) {
-					foreach($el['tpe']['blockTpl'] as $block=>$blockTpls) {
-						if(isset($recursive[$block]) && isset($blockTpls['outerTpl'])) $recursive[$block] = $this->parseTpl($blockTpls['outerTpl'], array_merge($phs, array('childs' =>$recursive[$block])), $el);
+			foreach ($childs as $childId => $empty) {
+
+				$el = $this->dom['body']['elements'][$childId];
+
+				// Set first / last css-class
+				if ($iteration === $totalChilds) $tpe = array('cssFirst' => '', 'cssLast' => isset($el['tpe']['cssLast']) ? $el['tpe']['cssLast'] : '');
+				else if ($iteration === 1) $tpe = array('cssFirst' => isset($el['tpe']['cssFirst']) ? $el['tpe']['cssFirst'] : '', 'cssLast' => '');
+				else $tpe = array('cssFirst' => '', 'cssLast' => '');
+
+				$phs = $this->prepareElementPlaceholders($el, '', $tpe);
+				$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
+
+				// Recursive part
+				if (!empty($this->dom['body']['childs'][$childId])) {
+
+					$recursive = array_merge($phs, $this->renderBodyElementsRecursive($childId));
+
+					// Handle blockTpl for Grids
+					if (isset($el['tpe']['blockTpl'])) {
+						foreach ($el['tpe']['blockTpl'] as $block => $blockTpls) {
+							if (isset($recursive[$block]) && isset($blockTpls['outerTpl'])) $recursive[$block] = $this->parseTpl($blockTpls['outerTpl'], array_merge($phs, array('childs' => $recursive[$block])), $el);
+						}
+					}
+
+					if (isset($el['tpe']['innerTpl'])) {
+						$phs['childs'] = $this->parseTpl($el['tpe']['innerTpl'], $recursive, $el);
+					}
+					else {
+						$phs = $recursive;
 					}
 				}
+				// Recursive part END
 
-				if(isset($el['tpe']['innerTpl'])) {
-					$phs['childs'] = $this->parseTpl($el['tpe']['innerTpl'], $recursive, $el);
-				} else {
-					$phs = $recursive;
-				}
-			}
-			// Recursive part END
-			
-			$elementTpl = $el['tpe']['tpl'];
-			
-			// Prepare show_elements-mode
-			$fetch = '';
-			if($this->tpeOptions['show_elements']) {
-				$this->fetchTpl($elementTpl); // Prepare tags-array in $this->tplCache
-				// If [+debug+] does not exist in element-template, simply prepend element-info 
-				if(!in_array('debug', $this->tplCache[$elementTpl]['tags'])) {
-					$fetch .= $this->renderElementsDebugInfo($el);
-				} else {
-					$phs['debug'] = $this->renderElementsDebugInfo($el); // Provide info using template "debug.element"
-					$phs['debug_raw'] = $this->renderElementsDebugInfo($el, true); // Provide info without template
-				}
-			};
+				$elementTpl = $el['tpe']['tpl'];
 
-			// Handle prepend-parameter
-			if(isset($el['tpe']['prepend'])) $fetch .= $el['tpe']['prepend'] . "\n";
-			
-			// No more recursion / Render and return deepest child
-			$source = $this->parseTpl($elementTpl, $phs, $el);
-			$source = $modx->parseManagerDocumentSource($source);
-			$fetch .= $source . "\n";
-			
-			// Handle apppend-parameter
-			if(isset($el['tpe']['append'])) $fetch .= $el['tpe']['append'] . "\n";
-			
-			// Wrap element inside an outerTpl
-			if(isset($el['tpe']['outerTpl'])) {
-				$output[$pos] .= $this->parseTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs' =>$fetch)), $el) . "\n";
-			} else {
-				$output[$pos] .= $fetch;
+				// Prepare show_elements-mode
+				$fetch = '';
+				if ($this->tpeOptions['show_elements']) {
+					$this->fetchTpl($elementTpl); // Prepare tags-array in $this->tplCache
+					// If [+debug+] does not exist in element-template, simply prepend element-info 
+					if (!in_array('debug', $this->tplCache[$elementTpl]['tags'])) {
+						$fetch .= $this->renderElementsDebugInfo($el);
+					}
+					else {
+						$phs['debug']     = $this->renderElementsDebugInfo($el); // Provide info using template "debug.element"
+						$phs['debug_raw'] = $this->renderElementsDebugInfo($el, true); // Provide info without template
+					}
+				};
+
+				// Handle prepend-parameter
+				if (isset($el['tpe']['prepend'])) $fetch .= $el['tpe']['prepend'] . "\n";
+
+				// No more recursion / Render and return deepest child
+				$source = $this->parseTpl($elementTpl, $phs, $el);
+				$source = $modx->parseManagerDocumentSource($source);
+				$fetch .= $source . "\n";
+
+				// Handle apppend-parameter
+				if (isset($el['tpe']['append'])) $fetch .= $el['tpe']['append'] . "\n";
+
+				// Wrap element inside an outerTpl
+				if (isset($el['tpe']['outerTpl'])) {
+					$output[$pos] .= $this->parseTpl($el['tpe']['outerTpl'], array_merge($phs, array('childs' => $fetch)), $el) . "\n";
+				}
+				else {
+					$output[$pos] .= $fetch;
+				}
+				$iteration++;
 			}
-			$iteration++;
+		} else if($noChildsReturnEmpty) {
+			return '';
 		}
 		
 		// Render grand parent
@@ -630,7 +656,10 @@ class ManagerTemplateEngine {
 					$value = isset($placeholder['tpe'][$tpeKey]) ? $placeholder['tpe'][$tpeKey] : '';
 				} else if(isset($placeholder[$tag])){
 					// Parse normal placeholders
-					$value = $placeholder[$tag];
+					if($tag == 'id' && isset($placeholder['attr']['id'])) {
+						$value = $placeholder['attr']['id'];
+					}
+					else $value = $placeholder[$tag];
 				} else {
 					// Merge elements like [+userform+], [+userform.section+]
 					// $value = $this->mergeElement($tag);
@@ -697,19 +726,20 @@ class ManagerTemplateEngine {
 
 	function mergeDebugMsg()
 	{
-		$debug = '<hr/>';
+		$debug = '';
 		if($this->tpeOptions['debug_info']) {
+			$debug .= '<hr/>';
 			$debug .= '<h2>debugMsg</h2>'."\n";
 			$debug .= !empty($this->debugMsg) ? '<pre style="font-size:12px;">'.print_r($this->debugMsg,true).'</pre>' : 'No errors found.';
 			$debug .= '<h2>Elements-Matrix</h2>'."\n";
 			$debug .= $this->renderDebugElementsMatrixRecursive($this->dom['body']['childs']['body']);
 		}
 		if($this->tpeOptions['echo_arrays']) {
-			$debug = '<h2>dom</h2><pre style="font-size:12px;">'.print_r($this->dom,true).'</pre>'."\n";
+			$debug .= '<h2>dom</h2><pre style="font-size:12px;">'.print_r($this->dom,true).'</pre>'."\n";
 			$debug .= '<h2>typeDefaults</h2><pre style="font-size:12px;">'.print_r($this->typeDefaults,true).'</pre>'."\n";
 		}
 		if($this->tpeOptions['echo_arrays']) { echo $debug; exit; }
-		return '<div class="debug">'. $debug. '</div>';
+		return $debug ? '<div class="debug">'. $debug. '</div>' : '';
 	}
 	
 	function renderDebugElementsMatrixRecursive($childs)

@@ -6,7 +6,7 @@ class EVOmenu{
 	var $defaults = array();
 	var $menu;
 	var $output;
-	function Build($menu,$setting=array()){
+	function Build($menu,$setting=array(),$useTpe=false){
 		$this->defaults['outerClass']      = 'nav';
 		$this->defaults['parentClass']     = 'dropdown';
 		$this->defaults['parentLinkClass'] = 'dropdown-toggle';
@@ -16,8 +16,18 @@ class EVOmenu{
 		
 		$this->defaults = $this->defaults + $setting; 
 		$this->Structurise($menu);
-		$this->output = $this->DrawSub('main',0);
-		echo $this->output;
+		
+		if($useTpe) {
+			// Prepare root-element
+			global $modx;
+			$tpe =& $modx->manager->tpe;
+			$tpe->setElement('mainmenu.category', 'mainmenu', array('id' => 'nav'), array('class' => 'nav'));
+
+			$this->setTpeElementsRecursive('main');
+		} else {
+			$this->output = $this->DrawSub('main', 0);
+			echo $this->output;
+		}
 	}
 	
 	function Structurise($menu){
@@ -34,7 +44,39 @@ class EVOmenu{
 		$this->menu = $new;
 	}
 	
+	function setTpeElementsRecursive($elementId)
+	{
+		global $modx;
+		$tpe =& $modx->manager->tpe;
 
+		// Now loop through $sitemenu and add to template-engine
+		foreach($this->menu[$elementId] as $i=>$value) {
+
+			$id = $value[0];
+			$parent = $value[1];
+			$tpeType = $parent == 'main' ? 'category' : 'button';
+			
+			$tpe->setElement('mainmenu.button',
+				'mainmenu'. ($parent == 'main' ? '' : '.'.$parent) .'.'.$id,
+				array(
+					'label'=>$value[2] . $this->getItemName($id),
+					'icon'=>'',
+					'href'=>$value[3],
+					'onclick'=>$value[5],
+					'target'=>$value[7],
+					'alt'=>$value[4],
+					'manual'=>$this->getLinkAttr($id),
+				),
+				array(
+					'li_class'=>$this->get_li_class($id) . $value[10],
+					'a_class'=>$this->get_a_class($id),
+				)
+			);
+			
+			if(isset($this->menu[$id])) $this->setTpeElementsRecursive($id);
+		}
+	}
+	
 	function DrawSub($parentid,$level){
 		global $modx;
 		if (isset($this->menu[$parentid])){
@@ -92,7 +134,7 @@ class EVOmenu{
 	
 	function get_a_class($id) {
 		if(isset($this->menu[$id]))
-			return 'class="' . $this->defaults['parentLinkClass'] . '"';
+			return $this->defaults['parentLinkClass'];
 	}
 	
 	function getLinkAttr($id) {

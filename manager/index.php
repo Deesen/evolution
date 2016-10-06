@@ -274,6 +274,7 @@ switch ($action) {
 		if($frame>9) {
 			$enable_debug=false;    // this is to stop the debug thingy being attached to the framesets
 		}
+		ob_start(); // Required for template-engine
 		include_once(includeFileProcessor("frames/".$frame.".php",$manager_theme));
 	break;
 /********************************************************************/

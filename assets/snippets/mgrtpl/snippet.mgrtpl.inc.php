@@ -11,6 +11,7 @@ $element = isset($element) ? $element : '';
 $depth = isset($depth) ? (int)$depth : 0;
 $cssFirst = isset($cssFirst) ? $cssFirst : '';
 $cssLast = isset($cssLast) ? $cssLast : '';
+$noChildsReturnEmpty = isset($noChildsReturnEmpty) ? $noChildsReturnEmpty : '';
 
 $set = isset($set) ? $set : '';
 $value = isset($value) ? $value : '';
@@ -18,9 +19,7 @@ $value = isset($value) ? $value : '';
 $tpe =& $modx->manager->tpe;
 
 if($set) {
-	if(isset($tpe->tpeOptions[$set])) {
-		$tpe->tpeOptions[$set] = $value;
-	}
+	$tpe->setTpeOption($set, $value);
 	return '';
 }
 
@@ -30,10 +29,10 @@ switch($get) {
 		return $tpe->mergeDomAlerts($outerTpl, $rowTpl);
 		break;
 	case 'element':
-		return $tpe->renderBodyElementsRecursive($element, false, true);
+		return $tpe->renderBodyElementsRecursive($element, false, true, $noChildsReturnEmpty);
 		break;
 	case 'elements':
-		return $tpe->renderBodyElementsRecursive($element, true, true);
+		return $tpe->renderBodyElementsRecursive($element, true, true, $noChildsReturnEmpty);
 		break;
 	case 'list':
 		return $tpe->mergeElementsList($element, $depth, $outerTpl, $rowTpl, $cssFirst, $cssLast);

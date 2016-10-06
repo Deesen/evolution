@@ -138,4 +138,4 @@ $menu = unserialize($menu[0]);
 if (is_array($menu)) $sitemenu = $menu;
 include_once(MODX_MANAGER_PATH . 'includes/menu.class.inc.php');
 $menu = new EVOmenu();
-$menu->Build($sitemenu);
+$menu->Build($sitemenu,array(),true);
