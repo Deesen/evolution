@@ -554,6 +554,9 @@ class ManagerTemplateEngine {
 						$phs['debug']     = $this->renderElementsDebugInfo($el); // Provide info using template "debug.element"
 						$phs['debug_raw'] = $this->renderElementsDebugInfo($el, true); // Provide info without template
 					}
+				} else {
+					// Just add info as HTML-comment
+					$fetch .= '<!-- '.$el['target'].' -->'. "\n";
 				};
 
 				// Handle prepend-parameter
