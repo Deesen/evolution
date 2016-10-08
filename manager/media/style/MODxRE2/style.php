@@ -14,7 +14,7 @@ $modx->config['mgr_date_picker_path'] = sprintf('media/style/%s/moo-datepicker/d
 // Large Icons
 $_style['icons_backup_large']       = 'fa fa-database fa-fw fa-3x';
 $_style['icons_mail_large']         = 'fa fa-envelope fa-fw fa-3x';
-$_style['icons_modules_large']      = 'fa fa-th-large fa-fw fa-3x';
+$_style['icons_modules_large']      = 'fa fa-cogs fa-fw fa-3x';
 $_style['icons_resources_large']    = 'fa fa-th fa-fw fa-3x';
 $_style['icons_security_large']     = 'fa fa-lock fa-fw fa-3x';
 $_style['icons_webusers_large']     = 'fa fa-users fa-fw fa-3x';
@@ -51,11 +51,11 @@ $_style['ctx_resource_overview']    = 'fa fa-info fa-fw fa-lg';
 $_style['ctx_preview_resource']     = 'fa fa-eye fa-fw fa-lg';
 
 // Tree Icons
-$_style['tree_deletedpage']         = $style_path.'tree/file.png';
+$_style['tree_deletedpage']         = $style_path.'tree/file-alt-deleted.png';
 $_style['tree_folder']              = $style_path.'tree/folder-close-alt.png'; /* folder.png */
 $_style['tree_folderopen']          = $style_path.'tree/folder-open-alt.png'; /* folder-open.png */
-$_style['tree_folder_secure']       = $style_path.'tree/folder-close.png';
-$_style['tree_folderopen_secure']   = $style_path.'tree/folder-open.png';
+$_style['tree_folder_secure']       = $style_path.'tree/folder-close-alt-secure.png';
+$_style['tree_folderopen_secure']   = $style_path.'tree/folder-open-alt-secure.png';
 $_style['tree_globe']               = $style_path.'tree/globe.png';
 $_style['tree_linkgo']              = $style_path.'tree/link.png';
 $_style['tree_minusnode']           = $style_path.'tree/angle-down.png';
@@ -64,8 +64,8 @@ $_style['tree_page_home']           = $style_path.'tree/home.png';
 $_style['tree_page_404']            = $style_path.'tree/warning-sign.png';
 $_style['tree_page_hourglass']      = $style_path.'tree/time.png';
 $_style['tree_page_info']           = $style_path.'tree/info.png';
-$_style['tree_page_blank']          = $style_path.'tree/file.png';
-$_style['tree_page_css']            = $style_path.'tree/file-text-alt.png';
+$_style['tree_page_blank']          = $style_path.'tree/file-alt.png';
+$_style['tree_page_css']            = $style_path.'tree/file-text.png';
 $_style['tree_page_html']           = $style_path.'tree/file-alt.png';
 $_style['tree_page_xml']            = $style_path.'tree/file-code.png';
 $_style['tree_page_js']             = $style_path.'tree/file-code.png';
@@ -77,10 +77,10 @@ $_style['tree_plusnode']            = $style_path.'tree/angle-right.png';
 $_style['tree_showtree']            = '<img src="'.$style_path.'tree/sitemap.png" width="16" height="16" align="absmiddle" />';
 $_style['tree_weblink']             = $style_path.'tree/link.png';
 
-$_style['tree_page_secure']         = $style_path.'tree/file-secure.png';
-$_style['tree_page_blank_secure']   = $style_path.'tree/file-secure.png';
+$_style['tree_page_secure']         = $style_path.'tree/file-alt-secure.png';
+$_style['tree_page_blank_secure']   = $style_path.'tree/file-alt-secure.png';
 $_style['tree_page_css_secure']     = $style_path.'tree/file-code-secure.png';
-$_style['tree_page_html_secure']    = $style_path.'tree/file-secure.png';
+$_style['tree_page_html_secure']    = $style_path.'tree/file-alt-secure.png';
 $_style['tree_page_xml_secure']     = $style_path.'tree/file-code-secure.png';
 $_style['tree_page_js_secure']      = $style_path.'tree/file-code-secure.png';
 $_style['tree_page_rss_secure']     = $style_path.'tree/file-rss-secure.png';
@@ -88,39 +88,53 @@ $_style['tree_page_pdf_secure']     = $style_path.'tree/file-pdf-secure.png';
 $_style['tree_page_word_secure']    = $style_path.'tree/file-word-secure.png';
 $_style['tree_page_excel_secure']   = $style_path.'tree/file-excel-secure.png';
 
+// resource overview and managment
+$_style['icons_move_document']      = $style_path.'icons/move.png';
+$_style['icons_publish_document']   = $style_path.'icons/arrow-up.png';
+$_style['icons_unpublish_resource'] = $style_path.'icons/arrow-down.png';
+$_style['icons_delete_document']    = $style_path.'icons/trash.png';
+$_style['icons_resource_duplicate'] = $style_path.'icons/clone.png';
+$_style['icons_resource_overview']  = $style_path.'icons/info-sign.png';
+$_style['icons_edit_document']      = $style_path.'icons/save.png';
+$_style['icons_preview_resource']   = $style_path.'icons/eye.png';
+
+//Manage Files
+$_style['icons_save']               = $style_path.'icons/save.png';
+$_style['icons_delete']             = $style_path.'icons/trash.png';
+$_style['icons_deleted_folder']     = $style_path.'tree/deletedfolder.png';
+$_style['icons_unzip']              = $style_path.'icons/download-alt.png';
+
+// Indicators
+$_style['icons_tooltip']            = $style_path.'icons/question-sign-trans.png';
+$_style['icons_tooltip_over']       = $style_path.'icons/question-sign.png';
+$_style['icons_cal']                = $style_path.'icons/calendar.png';
+$_style['icons_cal_nodate']         = $style_path.'icons/calendar.png';
+
+//modules
+$_style['icons_modules']            = $style_path.'icons/modules.png';
+$_style['icons_run']                = $style_path.'icons/play.png';
+
 // Icons
 $_style['icons_add']                = $style_path.'icons/save.png';
-$_style['icons_cal']                = $style_path.'icons/cal.gif';
-$_style['icons_cal_nodate']         = $style_path.'icons/cal_nodate.gif';
 $_style['icons_cancel']             = $style_path.'icons/stop.png';
 $_style['icons_close']              = $style_path.'icons/stop.png';
-$_style['icons_delete']             = $style_path.'icons/delete.png';
-$_style['icons_delete_document']    = $style_path.'icons/delete.png';
-$_style['icons_resource_overview']  = $style_path.'icons/information.png';
-$_style['icons_resource_duplicate'] = $style_path.'icons/page_white_copy.png';
-$_style['icons_edit_document']      = $style_path.'icons/save.png';
 $_style['icons_email']              = $style_path.'icons/email.png';
 $_style['icons_folder']             = $style_path.'icons/folder.gif';
 $_style['icons_home']               = $style_path.'icons/home.gif';
-$_style['icons_information']        = $style_path.'icons/information.png';
-$_style['icons_loading_doc_tree']   = $style_path.'icons/information.png'; // top bar
+$_style['icons_information']        = $style_path.'icons/info-sign.png';
+$_style['icons_loading_doc_tree']   = $style_path.'icons/info-sign.png'; // top bar
 $_style['icons_mail']               = $style_path.'icons/email.png'; // top bar
 $_style['icons_message_unread']     = $style_path.'icons/email.png';
 $_style['icons_message_forward']    = $style_path.'icons/forward.gif';
 $_style['icons_message_reply']      = $style_path.'icons/reply.gif';
-$_style['icons_modules']            = $style_path.'icons/modules.gif';
-$_style['icons_move_document']      = $style_path.'icons/page_white_go.png';
 $_style['icons_new_document']       = $style_path.'icons/page_white_add.png';
 $_style['icons_new_weblink']        = $style_path.'icons/world_link.png';
-$_style['icons_preview_resource']   = $style_path.'icons/page_white_magnify.png';
-$_style['icons_publish_document']   = $style_path.'icons/clock_play.png';
+
 $_style['icons_refresh']            = $style_path.'icons/refresh.png'; 
-$_style['icons_save']               = $style_path.'icons/save.png';
 $_style['icons_set_parent']         = $style_path.'icons/layout_go.png';
 $_style['icons_sort_menuindex']     = $style_path.'icons/table_refresh.png';
 $_style['icons_table']              = $style_path.'icons/table.gif'; 
 $_style['icons_undelete_resource']  = $style_path.'icons/b092.gif';
-$_style['icons_unpublish_resource'] = $style_path.'icons/clock_stop.png';
 $_style['icons_user']               = $style_path.'icons/user.png';
 $_style['icons_weblink']            = $style_path.'icons/world_link.png';
 $_style['icons_working']            = $style_path.'icons/exclamation.png'; // top bar
@@ -129,12 +143,10 @@ $_style['icons_event2']             = $style_path.'icons/event2.png';
 $_style['icons_event3']             = $style_path.'icons/event3.png';
 $_style['icons_secured']            = $style_path.'icons/secured.gif';
 
+
 // Tabs
 $_style['icons_tab_preview']        = $style_path.'icons/preview.png';
 
-// Indicators
-$_style['icons_tooltip']            = $style_path.'icons/question-sign-trans.png';
-$_style['icons_tooltip_over']       = $style_path.'icons/question-sign.png';
 
 // Miscellaneous
 $_style['ajax_loader']              = '<p>'.$_lang['loading_page'].'</p><p><img src="'.$style_path.'misc/ajax-loader.gif" alt="Please wait" /></p>';
