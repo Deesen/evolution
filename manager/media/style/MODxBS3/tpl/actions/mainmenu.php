@@ -1,7 +1,7 @@
 <?php
 
 // Debug-Messages true/false
-$tpe->setTpeOption('debug_info', false);
+// $tpe->setTpeOption('debug_info', false);
 
 // Set separate body-template
 $tpe->setBodyTemplate('body.mainmenu');

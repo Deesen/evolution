@@ -5,7 +5,6 @@ class ManagerTemplateEngine {
 
 	var $tpeOptions = array(
 		'debug_info'=>false,     // show output + debug-info
-		'debug_info'=>false,     // show output + debug-info
 		'show_elements'=>false, // echo element-ids
 		'echo_arrays'=>false,   // echo only arrays
 	);
@@ -233,19 +232,7 @@ class ManagerTemplateEngine {
 		global $modx, $manager_theme;
 
 		// Load default or custom action-template before rendering body, parsing snippets etc
-		$actionTpl = 'media/style/' . $manager_theme . '/tpl/actions/' . $this->actionTpl . '.php';
-		if (!is_readable(MODX_MANAGER_PATH.$actionTpl)) $actionTpl = 'media/style/common/tpl/actions/' . $this->actionTpl . '.php';
-		if (is_readable(MODX_MANAGER_PATH.$actionTpl)) {
-			$this->debugSource = $actionTpl;
-			ob_start();
-			$tpe =& $this;
-			require(MODX_MANAGER_PATH.$actionTpl);
-			$this->actionTplHtml = ob_get_contents();
-			ob_end_clean();
-			$this->debugSource = '';
-		} else {
-			return 'Action-Template not found: '.$this->actionTpl;
-		}
+		$this->actionTplHtml = $this->fetchPhpTpl('media/style/[+manager_theme+]/tpl/actions/' . $this->actionTpl . '.php');
 
 		$source = $this->actionTplHtml;
 		$source = $modx->parseManagerDocumentSource($source);
@@ -253,6 +240,26 @@ class ManagerTemplateEngine {
 		return $source;
 	}
 	
+	function fetchPhpTpl($filePath)
+	{
+		global $modx, $manager_theme;
+		
+		$phpTpl = str_replace('[+manager_theme+]', $manager_theme, $filePath);
+		if (!is_readable(MODX_MANAGER_PATH.$phpTpl)) $phpTpl = str_replace('[+manager_theme+]', 'common', $filePath);
+		if (is_readable(MODX_MANAGER_PATH.$phpTpl)) {
+			$this->debugSource = $phpTpl;
+			ob_start();
+			$tpe =& $this;
+			require(MODX_MANAGER_PATH.$phpTpl);
+			$output = ob_get_contents();
+			ob_end_clean();
+			$this->debugSource = '';
+		} else {
+			return 'PHP-Template not found: '.$phpTpl;
+		}
+		
+		return $output;
+	}
 	
 	//////////////////////////////////////////////////////////////////
 	// Internal Functions
@@ -344,6 +351,28 @@ class ManagerTemplateEngine {
 		}
 		if(isset($this->typeDefaults[$key])) return $this->typeDefaults[$key];
 		return array();
+	}
+
+	// Used in /manager/index.php
+	function renderFrame($name)
+	{
+		global $modx, $_style, $_lang, $site_name, $use_browser, $which_browser, $manager_theme;
+		
+		$phpTpl = "media/style/{$manager_theme}/frames/{$name}.php";
+		if (!is_readable(MODX_MANAGER_PATH.$phpTpl)) $phpTpl = "media/style/common/frames/{$name}.php";
+		if (is_readable(MODX_MANAGER_PATH.$phpTpl)) {
+			$this->debugSource = $phpTpl;
+			ob_start();
+			$tpe =& $this;
+			require(MODX_MANAGER_PATH.$phpTpl);
+			$output = ob_get_contents();
+			ob_end_clean();
+			$this->debugSource = '';
+		} else {
+			return 'PHP-Template not found: '.$phpTpl;
+		}
+
+		return $output;
 	}
 
 	// Used in /manager/index.php
@@ -587,7 +616,7 @@ class ManagerTemplateEngine {
 		if($returnString) {
 			$el = $this->dom['body']['elements'][$elementId];
 			$phs = $this->prepareElementPlaceholders($el);
-			$pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
+			// $pos = isset($el['tpe']['pos']) ? $el['tpe']['pos'] : 'childs';
 			return $this->parseTpl($el['tpe']['tpl'], array_merge($phs, $output), $el) . "\n";
 		}
 
@@ -596,9 +625,6 @@ class ManagerTemplateEngine {
 	
 	function parseTpl($tpl, $placeholders=array(), $el=array())
 	{
-		// Allow using snippets like [[mgrTpl]] in templates
-		// $source = $modx->parseManagerDocumentSource($source);
-		
 		$tplHtml = $this->fetchTpl($tpl);
 		return $this->parsePlaceholders($tplHtml, $placeholders, $el);
 	}
@@ -668,15 +694,16 @@ class ManagerTemplateEngine {
 				} else if (substr($tag, 0, 3) == 'el.') {
 					// Replace template-engine params
 					$element = substr($tag, 3);
-					$value = $this->test;
+					$value = 'el. not ready';
 				} else if(isset($placeholder[$tag])){
 					// Parse normal placeholders
 					/*
 					if($tag == 'id' && isset($placeholder['attr']['id'])) {
 						$value = $placeholder['attr']['id'];
 					}
-					
-					else*/ $value = $placeholder[$tag];
+					else
+					*/
+					$value = $placeholder[$tag];
 				} else {
 					// Merge elements like [+userform+], [+userform.section+]
 					// $value = $this->mergeElement($tag);
