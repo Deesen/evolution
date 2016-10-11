@@ -1664,6 +1664,11 @@ a.hometblink:hover {
   white-space: nowrap;
 }
 
+.dynamic-tab-pane-control .tab-row .fa {
+  margin-right: 3px;
+  font-size: 14px;
+}
+
 .dynamic-tab-pane-control ul {
   padding-left: 5px;
   padding-right: 10px;
@@ -3184,4 +3189,33 @@ table.actionButtons .searchtext {
 #tabBackup p.actionButtons {
   margin-top: 20px;
   margin-bottom: 15px;
+}
+
+/* filter elements */
+
+.filterElements-form {
+  margin-bottom: 10px;
+  margin-top: 5px;
+}
+
+.filterElements-form .form-control {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+}
+
+/* pagetitle-icon */
+
+.pagetitle-icon {
+  margin-right: 2px;
+  color: #3697CD;
+}
+
+/* element-edit-message */
+
+.element-edit-message {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ededed;
+  margin-bottom: 15px;
+  color: #777;
 }
