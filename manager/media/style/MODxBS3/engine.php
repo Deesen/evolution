@@ -4,7 +4,7 @@
 
 // Bootstrap3 CSS
 
-$this->registerCssSrc('main',           'media/style/common/bootstrap/css/bootstrap.min.css')
+$this->registerCssSrc('bootstrap',      'media/style/common/bootstrap/css/bootstrap.min.css')
 ->registerCssSrc('font_awesome',        'media/style/common/font-awesome/css/font-awesome.min.css')
 ->registerCssSrc('awesome_checkbox',    'media/style/MODxBS3/css/awesome-bootstrap-checkbox.css')
 ->registerCssSrc('theme',               'media/style/MODxBS3/theme.css')

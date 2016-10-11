@@ -10,7 +10,8 @@ $tpe->setBodyTemplate('body.frame');
 $tpe->setElementTpe('mainmenu', 'tpl', 'tab.container');
 
 // Add extra CSS for mainmenu
-$tpe->registerCssSrc('mainmenu',               'media/style/MODxBS3/mainmenu.css');
+$tpe->registerCssSrc('mainmenu', 'media/style/MODxBS3/mainmenu.css');
+$tpe->registerCssSrc('main', NULL); // Remove main-css
 
 ?>
 <form name="menuForm" action="l4mnu.php" class="clear">
