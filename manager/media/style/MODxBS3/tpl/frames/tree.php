@@ -24,7 +24,7 @@ $tpe->setElementTpe('mainmenu', 'tpl', 'tab.container');
 				</h4>
 			</div>
 			<div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
-				<div class="panel-body">
+				<div class="list-group">
 					<table id="treeMenu" width="100%"  border="0" cellpadding="0" cellspacing="0">
 						<tr>
 							<td>
@@ -88,7 +88,8 @@ $tpe->setElementTpe('mainmenu', 'tpl', 'tab.container');
 				</div>
 			</div>
 		</div>
-
+	</div>
+	<div class="panel-group" id="accordion2" role="tablist" aria-multiselectable="true">
 		<div class="panel panel-default">
 			<div class="panel-heading" role="tab" id="headingTwo">
 				<h4 class="panel-title">
@@ -98,7 +99,7 @@ $tpe->setElementTpe('mainmenu', 'tpl', 'tab.container');
 				</h4>
 			</div>
 			<div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
-				<div class="panel-body">
+				<div class="list-group">
 					<form name="menuForm" action="l4mnu.php" class="clear">
 						<input type="hidden" name="sessToken" id="sessTokenInput" value="[+sessTokenInput+]" />
 
@@ -115,7 +116,8 @@ $tpe->setElementTpe('mainmenu', 'tpl', 'tab.container');
 				</div>
 			</div>
 		</div>
-
+	</div>
+	<div class="panel-group" id="accordion3" role="tablist" aria-multiselectable="true">
 		<div class="panel panel-default">
 			<div class="panel-heading" role="tab" id="headingThree">
 				<h4 class="panel-title">
@@ -125,7 +127,7 @@ $tpe->setElementTpe('mainmenu', 'tpl', 'tab.container');
 				</h4>
 			</div>
 			<div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
-				<div class="panel-body">
+				<div class="list-group">
 					[+resource_tree+]
 				</div>
 			</div>

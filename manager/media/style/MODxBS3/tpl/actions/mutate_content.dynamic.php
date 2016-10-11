@@ -23,7 +23,7 @@ $tpe->setElementOrder('tg_section3', 99); // Move TV-section to end
 
 // LEAVE section4 COLLAPSED (remove "in" for 'collapsed', set in MODxBSE/engine.php via setTypeDefaults('section'...) )
 // $tpe->setElementTpe('userform.pane1.tab2.grid2_1.section4', 'collapsed', '');
-
+$tpe->registerCssSrc('main', NULL); // Remove main-css
 ?>
 <div class="breadcrumbs-bar">
 		<div class="row">
