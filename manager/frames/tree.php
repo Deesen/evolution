@@ -132,6 +132,8 @@ $modx->config['mgr_jquery_path'] = 'media/script/jquery/jquery.min.js';
 	if ($modx->hasPermission('empty_trash')) {
 		$tpe->setElement('treemenu.button', 'treemenu.Button10', array('title'=>$_lang["empty_recycle_bin_empty"], 'label'=>$_style['empty_recycle_bin_empty'], 'onclick'=>"", 'href'=>'#'), array('class'=>'treeButtonDisabled'));
 	}
+	
+    $resource_tree = $this->fetchPhpTpl('frames/tree.resources.php');
+	$tpe->setPlaceholder('resource_tree', $resource_tree);
 
-
-
+?>

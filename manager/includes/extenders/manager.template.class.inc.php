@@ -287,7 +287,7 @@ class ManagerTemplateEngine {
 	
 	function fetchPhpTpl($filePath)
 	{
-		global $modx, $manager_theme;
+		global $modx, $_lang, $_style, $manager_theme;
 		
 		$phpTpl = str_replace('[+manager_theme+]', $manager_theme, $filePath);
 		if (!is_readable(MODX_MANAGER_PATH.$phpTpl)) $phpTpl = str_replace('[+manager_theme+]', 'common', $filePath);
