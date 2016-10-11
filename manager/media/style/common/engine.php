@@ -3,6 +3,7 @@
 
 // Default CSS
 $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
+->registerCssSrc('font_awesome', 'media/style/common/font-awesome/css/font-awesome.min.css')
 
 // Default Javascript-Files
 ->registerHeadScriptSrc('jquery', 		'[(mgr_jquery_path)]', '3.1.0')
@@ -45,7 +46,8 @@ $this->registerCssSrc('main', 'media/style/[(manager_theme)]/style.css')
 ->setTypeDefaults('raw',	 		    array('tpl'=>'raw'))
 ->setTypeDefaults('mainmenu.category',  array('tpl'=>'mainmenu.button'))
 ->setTypeDefaults('mainmenu.button',    array('tpl'=>'mainmenu.button'))
-
+->setTypeDefaults('treemenu.button',    array('tpl'=>'treemenu.button'))
+	
 ->setTypeDefaults('root',	 		    array('tpl'=>'root'))
 
 // Prepare main-buttons

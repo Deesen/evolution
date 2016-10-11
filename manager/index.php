@@ -175,6 +175,7 @@ foreach($_lang as $k=>$v)
 // Prepare Template-Engine after $_lang & $_style
 require(MODX_MANAGER_PATH.'includes/extenders/manager.template.class.inc.php');
 $modx->manager->tpe = new ManagerTemplateEngine;
+$modx->manager->tpe->setMainMenu(); // Set main-menu for global access
 
 // send the charset header
 header('Content-Type: text/html; charset='.$modx_manager_charset);
@@ -210,7 +211,8 @@ $SystemAlertMsgQueque = &$_SESSION['SystemAlertMsgQueque'];
 // first we check to see if this is a frameset request
 if(!isset($_POST['a']) && !isset($_GET['a']) && !isset($_POST['updateMsgCount'])) {
 	// this looks to be a top-level frameset request, so let's serve up a frameset
-	echo $modx->manager->tpe->renderFrame('1');
+	$actionHtml = $modx->manager->tpe->renderFrame('1');
+	echo $modx->manager->tpe->renderFullDom($actionHtml, true);
 	exit;
 }
 
@@ -964,7 +966,8 @@ switch ($action) {
 if($modx->manager->tpe->isActive()) {
 	$actionHtml = ob_get_contents();
 	ob_end_clean();
-	echo $modx->manager->tpe->renderFullDom($actionHtml);
+	$renderMainFrame = isset($frame) ? false : true;
+	echo $modx->manager->tpe->renderFullDom($actionHtml, $renderMainFrame);
 }
 
 /********************************************************************/

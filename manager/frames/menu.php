@@ -7,7 +7,12 @@ if (!array_key_exists('mail_check_timeperiod', $modx->config) || !is_numeric($mo
 // Prepare template-engine
 $tpe =& $modx->manager->tpe;
 
-$tpe->setActionTemplate('mainmenu')
+// $tpe->resetRegistered('js'); // Reset all registered JS - Resources (originally set in engine.php)
+$tpe->registerHeadScriptSrc('tabs', NULL);
+$tpe->registerHeadScriptFromFile('modx_jq', NULL); // Default injected Javascript - allows use of MODX-placeholders
+
+$tpe->setBodyTemplate('body.frame') // Frames have their own body-tpl
+
 ->setPlaceholder('tocTextRTL', $modx_textdir ? ' class="tocTextRTL"' : '')
 ->setPlaceholder('username', $modx->getLoginUserName())
 ->setPlaceholder('change_password', ($modx->hasPermission('change_password') ? ' <a onclick="this.blur();" href="index.php?a=28" target="main">'.$_lang['change_password'].'</a>'."\n" : "\n"))
@@ -20,8 +25,6 @@ $tpe->setPlaceholder('systemversion', sprintf('<span onclick="top.main.document.
 ;
 
 // REMOVE UNNESSECARY DEFAULT STUFF SET IN engine.php
-$tpe->registerHeadScriptSrc('tabs', NULL);
-$tpe->registerHeadScriptFromFile('modx_jq', NULL);
 $tpe->setPlaceholder('preloader', ''); // Without 'modx_jq' not working 
 
 // Add required Javascript
@@ -52,6 +55,7 @@ $modx_params = json_encode(array(
 	)
 ));
 
+// Prepare function inside placeholder [+reloadmenu+]
 $reloadmenu = $manager_layout == 0 ? '
 	var elm = $("buildText");
             if (elm) {
@@ -63,8 +67,4 @@ $reloadmenu = $manager_layout == 0 ? '
 
 $tpe->registerHeadScriptFromFile('mainmenu', 'media/script/mainmenu.js', array('modx_params'=>$modx_params, 'reloadmenu'=>$reloadmenu));
 
-// Now build mainmenu
-include('mainmenu.php');
-
-echo $modx->manager->tpe->renderAction();
 ?>

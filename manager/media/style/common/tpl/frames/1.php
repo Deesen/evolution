@@ -1,47 +1,33 @@
 <?php
 if(IN_MANAGER_MODE!="true") die("<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please use the MODX Content Manager instead of accessing this file directly.");
-header("X-XSS-Protection: 0");
-$_SESSION['browser'] = (strpos($_SERVER['HTTP_USER_AGENT'],'MSIE 1')!==false) ? 'legacy_IE' : 'modern';
-$mxla = $modx_lang_attribute ? $modx_lang_attribute : 'en';
-if(!isset($modx->config['manager_menu_height'])) $modx->config['manager_menu_height'] = '70';
-if(!isset($modx->config['manager_tree_width']))  $modx->config['manager_tree_width']  = '320';
-$modx->invokeEvent('OnManagerPreFrameLoader',array('action'=>$action));
 ?>
-<!DOCTYPE html>
-<html <?php echo (isset($modx_textdir) && $modx_textdir ? 'dir="rtl" lang="' : 'lang="').$mxla.'" xml:lang="'.$mxla.'"'; ?>>
-<head>
-	<title><?php echo $site_name?> - (MODX CMS Manager)</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=<?php echo $modx_manager_charset?>" />
-    <style>
-        html, body { margin: 0; padding: 0; width: 100%; height: 100% }
-        body { position: relative }
-        #mainMenu, #tree, #main { position: absolute }
-        #mainMenu iframe, #tree iframe, #main iframe, #mask_resizer { position: absolute; width: 100%; height: 100%; }
-        #mainMenu { height: 70px; width: 100%;}
-        #tree { width: <?php echo $modx->config['manager_tree_width'];?>px; top: 70px; left: 0; bottom: 0; }
-        #main { top: 70px; left: <?php echo $modx->config['manager_tree_width'];?>px; right: 0; bottom: 0; }
-        #resizer { position: absolute; top: 70px; bottom: 0; left: <?php echo $modx->config['manager_tree_width'];?>px; width: 12px; cursor: col-resize; z-index: 999 }
-        #resizer #hideMenu {
-            display: block;
-            margin-top: 5px;
-            margin-left: -8px;
-            cursor: pointer;
-            background: transparent url("media/style/<?php echo $modx->config['manager_theme']; ?>/images/icons/application_side_contract.png") no-repeat !important;
-            width: 16px;
-            height: 16px;
-        }
-        #resizer2 { position: absolute; top: 65px; right: 50px; width: 3px; z-index: 999;}
-        #resizer2 #hideTopMenu {display:block;
-            margin-top:-4px;
-            margin-left:px;
-            cursor:pointer;
-            background:transparent url(media/style/<?php echo $modx->config['manager_theme']; ?>/images/icons/application_get.png)!important;
-            width:16px;
-            height:16px;
-        }
-    </style>
-</head>
-<body>
+	<style>
+		html, body { margin: 0; padding: 0; width: 100%; height: 100% }
+		body { position: relative }
+		#mainMenu, #tree, #main { position: absolute }
+		#mainMenu iframe, #tree iframe, #main iframe, #mask_resizer { position: absolute; width: 100%; height: 100%; }
+		#mainMenu { height: 70px; width: 100%;}
+		#tree { width: <?php echo $modx->config['manager_tree_width'];?>px; top: 70px; left: 0; bottom: 0; }
+		#main { top: 70px; left: <?php echo $modx->config['manager_tree_width'];?>px; right: 0; bottom: 0; }
+		#resizer { position: absolute; top: 70px; bottom: 0; left: <?php echo $modx->config['manager_tree_width'];?>px; width: 12px; cursor: col-resize; z-index: 999 }
+		#resizer #hideMenu {
+			display: block;
+			margin-top: 5px;
+			margin-left: -8px;
+			cursor: pointer;
+			background: transparent url("media/style/[(manager_theme)]/images/icons/application_side_contract.png") no-repeat !important;
+			width: 16px;
+			height: 16px;
+		}
+		#resizer2 { position: absolute; top: 65px; right: 50px; width: 3px; z-index: 999;}
+		#resizer2 #hideTopMenu {display:block;
+			margin-top:-4px;
+			cursor:pointer;
+			background:transparent url(media/style/[(manager_theme)]/images/icons/application_get.png)!important;
+			width:16px;
+			height:16px;
+		}
+	</style>
     <div id="resizer">
         <a id="hideMenu" onclick="mainMenu.toggleTreeFrame();"></a>
     </div>
@@ -49,14 +35,14 @@ $modx->invokeEvent('OnManagerPreFrameLoader',array('action'=>$action));
         <a id="hideTopMenu" onclick="mainMenu.toggleMenuFrame();"></a>
     </div>
     <div id="mainMenu">
-        <iframe name="mainMenu" src="index.php?a=1&amp;f=menu" scrolling="no" frameborder="0" noresize="noresize"></iframe>
+	    [+iframe_mainMenu+]
     </div>
     <div id="tree">
-        <iframe name="tree" src="index.php?a=1&amp;f=tree" scrolling="no" frameborder="0" onresize="mainMenu.resizeTree();"></iframe>
+        [+iframe_tree+]
     </div>
 
     <div id="main">
-        <iframe name="main" id="mainframe" src="index.php?a=2" scrolling="auto" frameborder="0" onload="if (mainMenu.stopWork()) mainMenu.stopWork(); scrollWork();"></iframe>
+	    [+iframe_main+]
     </div>
 
     <script language="JavaScript" type="text/javascript">
@@ -82,7 +68,7 @@ $modx->invokeEvent('OnManagerPreFrameLoader',array('action'=>$action));
                 _oldZIndex = _dragElement.style.zIndex;
                 _dragElement.style.zIndex = 10000;
                 _dragElement.style.background = '#444';
-                document.body.appendChild(mask)
+                document.body.appendChild(mask);
                 document.onmousemove = OnMouseMove;
                 document.body.focus();
                 document.onselectstart = function () {
@@ -155,9 +141,3 @@ $modx->invokeEvent('OnManagerPreFrameLoader',array('action'=>$action));
             }        
         }
     </script>
-    <?php
-    $modx->invokeEvent('OnManagerFrameLoader',array('action'=>$action));
-    ?>
-</body>
-</html>
-<?php

@@ -4,7 +4,7 @@
 // $tpe->setTpeOption('debug_info', false);
 
 // Set separate body-template
-$tpe->setBodyTemplate('body.mainmenu');
+$tpe->setBodyTemplate('body.frame');
 
 // Change template of mainmenu to tab.container
 $tpe->setElementTpe('mainmenu', 'tpl', 'tab.container');

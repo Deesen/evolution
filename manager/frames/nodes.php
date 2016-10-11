@@ -6,6 +6,8 @@
  */
 if(IN_MANAGER_MODE!='true') die('<b>INCLUDE_ORDERING_ERROR</b><br /><br />Please use the MODX Content Manager instead of accessing this file directly.');
 
+$tpe->setBodyTemplate('body.raw'); // Frames have their own body-tpl
+
 global $output, $opened, $opened2, $closed2; // adding global vars
 
 include_once('nodes.functions.inc.php');
@@ -40,11 +42,12 @@ include_once('nodes.functions.inc.php');
     $closed2 = array();
 
     makeHTML($indent,$parent,$expandAll,$theme);
-    echo $output;
 
     // check for deleted documents on reload
     if ($expandAll==2) {
         $rs = $modx->db->select('COUNT(*)', $modx->getFullTableName('site_content'), 'deleted=1');
         $count = $modx->db->getValue($rs);
-        if ($count>0) echo '<span id="binFull"></span>'; // add a special element to let system now that the bin is full
+        if ($count>0) $output .= '<span id="binFull"></span>'; // add a special element to let system now that the bin is full
     }
+    
+	$tpe->setPlaceholder('tree_nodes', $output);
