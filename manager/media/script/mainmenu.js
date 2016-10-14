@@ -70,7 +70,7 @@ window.addEvent('load', function() {
     function setMenuFrameHeight(pos) {
         parent.document.getElementById('tree').style.top    = pos + 'px';
         parent.document.getElementById('resizer').style.top = pos + 'px';
-        parent.document.getElementById('resizer2').style.top = pos + 'px';
+        parent.document.getElementById('resizer2').style.top = pos-5 + 'px';
         parent.document.getElementById('main').style.top    = pos + 'px';
         parent.document.getElementById('mainMenu').style.height    = pos + 'px';
     }

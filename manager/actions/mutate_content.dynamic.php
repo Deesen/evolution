@@ -6,7 +6,8 @@ global $_style, $_lang;
 // Prepare template-engine
 $tpe =& $modx->manager->tpe;
 $tpe->setActionTemplate('mutate_content.dynamic')
-	->setPlaceholder('title', $_REQUEST['id'] ? $_lang['edit_resource_title'] . ' <small>('. $_REQUEST['id'].')</small>' : $_lang['create_resource_title']);
+	->setPlaceholder('title', $_REQUEST['id'] ? $_lang['edit_resource_title'] . ' <small>('. $_REQUEST['id'].')</small>' : $_lang['create_resource_title'])
+	->setPlaceholder('action_icon', 'fa fa-pencil-square-o');
 
 /********************/
 $sd=isset($_REQUEST['dir'])?'&dir='.$_REQUEST['dir']:'&dir=DESC';

@@ -9,7 +9,12 @@
 <body id="[+body_id+]" ondragstart="return false"[+modx_textdir_class+]>
 [+preloader+]
 
-[[if?&is=`[+title+]|||!empty`&separator=`|||`&then=`<h1>[+title+]</h1>`]]
+[[if?&is=`[+title+]|||!empty`&separator=`|||`&then=`
+    <h1>
+        [[if?&is=`[+action_icon+]|||!empty`&separator=`|||`&then=`<span class="pagetitle-icon"><i class="[+action_icon+]"></i></span>`]]
+        [+title+]
+    </h1>
+`]]
 
 [[mgrTpl?&get=`elements` &element=`actions` &noChildsReturnEmpty=`1`]]
 [[mgrTpl?&get=`alerts`]]
