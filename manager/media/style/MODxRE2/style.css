@@ -723,8 +723,7 @@ input.submit {
 
 .section .sectionBody {
   margin: 0 15px 15px;
-  padding: 7px;
-  padding-left: 15px;
+  padding: 15px;
   background-color: #fff;
   border: 1px solid #CCCCCC;
 }
@@ -1479,14 +1478,14 @@ a.hometblink:hover {
 
 #mx_contextmenu .menuLink img,
 #mx_contextmenu .menuLinkDisabled img {
-  /* 	opacity: .3;
-	filter: alpha(opacity=30); */
+  /*  opacity: .3;
+  filter: alpha(opacity=30); */
   vertical-align: top;
 }
 
 #mx_contextmenu .menuLink:hover img {
-  /* 	opacity: 1;
-	filter: alpha(opacity=100); */
+  /*  opacity: 1;
+  filter: alpha(opacity=100); */
 }
 
 #mx_contextmenu #nameHolder {
@@ -1739,7 +1738,7 @@ a.hometblink img {
 
 .wm_button {
   display: inline-block;
-  margin: 0px 20px 20px 0px;
+  margin: 0px 15px 15px 0px;
   text-align: center;
 }
 
@@ -2045,23 +2044,10 @@ ul.actionButtons {
   font-weight: bold;
 }
 
-#resourcesPane .actionButtons {
-  padding-top: 0;
-  min-height: 48px;
-}
-
-#resourcesPane .actionButtons li {
-  margin-right: 10px;
-}
-
-#resourcesPane .actionButtons a {
-  display: inline-block;
-}
-
 
 /*
 * Generic styles for all form elements
-		*/
+    */
 
 form#mutate dt,
 form#mutate dd {
@@ -2713,7 +2699,7 @@ div.treeframebody {
 #nav > li > a {
   height: 33px;
   line-height: 34px;
-  color: #FFF;
+  color: rgba(255, 255, 255, 0.75);
   font-weight: bold;
 }
 
@@ -2732,7 +2718,7 @@ div.treeframebody {
 #nav li.active ul.subnav, 
 #nav li.active ul.subnav a {
   color: #C9D4E1;
-  color: #fff;
+  color: rgba(255,255,255,0.95);
   filter: none;
   background: none;
   background-color: transparent;
@@ -2913,9 +2899,12 @@ div.treeframebody {
   background: #fff;
   filter: none;
   color: #555;
-  border-color: transparent;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #E4E4E4;
   border-radius: 3px !important;
-  box-shadow: 0 0 0 1px #E4E4E4;
+  /*box-shadow: 0 0 0 1px #E4E4E4;*/
+  box-shadow: none;
   transition: none;
 }
 .actionButtons a:hover {
@@ -2952,6 +2941,25 @@ div.treeframebody {
 }
 #treePane .actionButtons img {
   display: inline;
+}
+
+.actionButtons--tableheader .fa {
+  font-size: 14px;
+}
+
+.sectionBody .actionButtons {
+  padding-top: 0;
+  min-height: 48px;
+}
+
+.sectionBody .actionButtons li {
+  margin-right: 10px;
+}
+
+.sectionBody .actionButtons a {
+  display: inline-block;
+  padding: 9px 10px;
+  line-height: 1;
 }
 
 .treeButton, 
@@ -3225,8 +3233,8 @@ table.actionButtons .searchtext {
 
 .actionButtons .filterElements-form .form-control {
   width: 200px;
-  height: 37px;
-  padding-left: 10px;
+  height: 33px;
+  padding-left: 8px;
   box-sizing: border-box;
 }
 
@@ -3245,3 +3253,5 @@ table.actionButtons .searchtext {
   margin-bottom: 15px;
   color: #777;
 }
+
+.userprofiletable {margin-bottom:-20px;}
