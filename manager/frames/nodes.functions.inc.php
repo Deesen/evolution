@@ -303,7 +303,7 @@ function getTplSingleNode() {
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\'"
     />&nbsp;<span
         p="[+parent+]"
-        onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
+        onclick="treeAction(event,[+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this,1);"
         onmouseout="setHoverClass(this, 0);"
         class="treeNode"
@@ -335,7 +335,7 @@ function getTplOpenFolderNode() {
         onmouseout="setCNS(this, 0)"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         />&nbsp;<span
-        onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
+        onclick="treeAction(event,[+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this, 1);"
         onmouseout="setHoverClass(this, 0);"
         class="treeNode"
@@ -367,7 +367,7 @@ function getTplClosedFolderNode() {
         onmouseout="setCNS(this, 0)"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         />&nbsp;<span
-        onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
+        onclick="treeAction(event,[+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this, 1);"
         onmouseout="setHoverClass(this, 0);"
         class="treeNode"

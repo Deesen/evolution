@@ -315,7 +315,7 @@ $mxla = $modx_lang_attribute ? $modx_lang_attribute : 'en';
         }
     }
 
-    function treeAction(id, name, treedisp_children) {
+    function treeAction(e, id, name, treedisp_children) {
         if(ca=="move") {
             try {
                 parent.main.setMoveValue(id, name);
@@ -329,11 +329,19 @@ $mxla = $modx_lang_attribute ? $modx_lang_attribute : 'en';
                 parent.main.location.href="index.php?a=2";
             } else {
                 // parent.main.location.href="index.php?a=3&id=" + id + getFolderState(); //just added the getvar &opened=
+                var href = '';
                 if(treedisp_children==0) {
-					parent.main.location.href="index.php?a=3&id=" + id + getFolderState();
-				} else {
-					parent.main.location.href="index.php?a=<?php echo (!empty($modx->config['tree_page_click']) ? $modx->config['tree_page_click'] : '27'); ?>&id=" + id; // edit as default action
-				}
+                    href = "index.php?a=3&id=" + id + getFolderState();
+                } else {
+                    href = "index.php?a=<?php echo(!empty($modx->config['tree_page_click']) ? $modx->config['tree_page_click'] : '27'); ?>&id=" + id; // edit as default action
+                }
+                if (e.shiftKey) {
+                    window.getSelection().removeAllRanges(); // Remove unnessecary text-selection
+                    randomNum = Math.floor((Math.random()*999999)+1);
+                    window.open(href, 'res'+randomNum, 'width=960,height=720,top='+((screen.height-720)/2)+',left='+((screen.width-960)/2)+',toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=no');
+                } else {
+                    parent.main.location.href=href;
+                }
             }
         }
         if(ca=="parent") {
@@ -555,7 +563,7 @@ foreach($sortParams as $param) {
     if (is_array($evtOut))
         echo implode("\n", $evtOut);
 ?>
-    <div><?php echo $_style['tree_showtree']; ?>&nbsp;<span class="rootNode" onClick="treeAction(0, '<?php $site_name = htmlspecialchars($site_name,ENT_QUOTES,$modx->config['modx_charset']); echo $site_name; ?>');"><b><?php echo $site_name; ?></b></span><div id="treeRoot"></div></div>
+    <div><?php echo $_style['tree_showtree']; ?>&nbsp;<span class="rootNode" onClick="treeAction(event, 0, '<?php $site_name = htmlspecialchars($site_name,ENT_QUOTES,$modx->config['modx_charset']); echo $site_name; ?>');"><b><?php echo $site_name; ?></b></span><div id="treeRoot"></div></div>
 <?php
     // invoke OnTreeRender event
     $evtOut = $modx->invokeEvent('OnManagerTreeRender', $modx->db->escape($_REQUEST));
