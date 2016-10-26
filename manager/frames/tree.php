@@ -298,6 +298,18 @@ $mxla = $modx_lang_attribute ? $modx_lang_attribute : 'en';
         new Ajax('index.php?'+treeParams, {method: 'get',onComplete:rpcLoadData}).request();
     }
 
+    function unlockResource(id, domEl) {
+	    if(confirm('Do you really want to unlock ID '+id)==true) {
+		    jQuery.get( 'index.php?a=67&id='+id, function( data ) {
+			    if(data == 1) {
+				    jQuery(domEl).fadeOut();
+				    // top.main.document.location.href="index.php?a=27&id="+id; // Redirect to "Edit Resource"
+			    }
+			    else alert( data );
+		    });
+	    }
+    }
+
     function emptyTrash() {
         if(confirm("<?php echo $_lang['confirm_empty_trash']; ?>")==true) {
             top.main.document.location.href="index.php?a=64";

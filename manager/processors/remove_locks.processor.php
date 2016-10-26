@@ -4,9 +4,19 @@ if(!$modx->hasPermission('remove_locks')) {
 	$modx->webAlertAndQuit($_lang["error_no_privileges"]);
 }
 
-// Remove locks
-$modx->db->truncate($modx->getFullTableName('active_users'));
+if(!isset($_GET['id'])) {
+	// Remove all locks
+	$modx->db->truncate($modx->getFullTableName('active_users'));
 
-$header="Location: index.php?a=7";
+	$header = "Location: index.php?a=7";
 	header($header);
+} else {
+	// Ajax: Handle single-ID unlock requests
+	$id = intval($_GET['id']);
+	if($id) {
+		if($modx->db->delete($modx->getFullTableName('active_users'), "id='{$id}'")) echo '1';
+		else echo 'Unknown error occured';
+		exit;
+	}
+}
 ?>

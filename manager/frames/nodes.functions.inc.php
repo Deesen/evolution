@@ -92,7 +92,17 @@ function makeHTML($indent,$parent,$expandAll,$theme) {
         
         $weblinkDisplay = $type=='reference' ? sprintf('&nbsp;<img src="%s">',$_style['tree_linkgo']) : '' ;
         $pageIdDisplay = '<small>('.($modx_textdir ? '&rlm;':'').$id.')</small>';
-        $lockedByUser = isset($lockedResources[$id]) ? '<span class="lockedResource" title="Locked by user &quot;'. $lockedResources[$id]['username']."&quot;\non ".$modx->toDateFormat($lockedResources[$id]['lasthit']). '"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></span>' : '';
+	    
+	    $lockedByUser = '';
+	    if(isset($lockedResources[$id])) {
+		    $title = 'Locked by user &quot;'. $lockedResources[$id]['username']."&quot;\non ".$modx->toDateFormat($lockedResources[$id]['lasthit']);
+		    if($modx->hasPermission('remove_locks')) {
+			    $lockedByUser = '<a href="#" onclick="unlockResource('.$id.', this);return false;" title="'.$title.'" class="lockedResource"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></a>';
+		    } else {
+			    $lockedByUser = '<span title="'.$title.'" class="lockedResource"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></span>';
+		    }
+	    }
+	    
         $url = $modx->makeUrl($id);
 
         $alt = '';
