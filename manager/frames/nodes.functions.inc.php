@@ -42,6 +42,17 @@ function makeHTML($indent,$parent,$expandAll,$theme) {
     $tblsc = $modx->getFullTableName('site_content');
     $tbldg = $modx->getFullTableName('document_groups');
     $tblst = $modx->getFullTableName('site_templates');
+    $tblau = $modx->getFullTableName('active_users');
+
+    // check which resources are locked
+    $lockedResources = array();
+    $where = sprintf("action=27 AND internalKey!='%s'", $modx->getLoginUserID());
+    $result = $modx->db->select('id,username,lasthit', $tblau, $where);
+    while($row = $modx->db->getRow($result))
+    {
+        $lockedResources[$row['id']] = array('username'=>$row['username'], 'lasthit'=>$row['lasthit']);
+    }
+    
     // get document groups for current user
     $docgrp = (isset($_SESSION['mgrDocgroups']) && is_array($_SESSION['mgrDocgroups'])) ? implode(',',$_SESSION['mgrDocgroups']) : '';
     $showProtected= false;
@@ -81,6 +92,7 @@ function makeHTML($indent,$parent,$expandAll,$theme) {
         
         $weblinkDisplay = $type=='reference' ? sprintf('&nbsp;<img src="%s">',$_style['tree_linkgo']) : '' ;
         $pageIdDisplay = '<small>('.($modx_textdir ? '&rlm;':'').$id.')</small>';
+        $lockedByUser = isset($lockedResources[$id]) ? ' <span class="lockedResource" title="Locked by user &quot;'. $lockedResources[$id]['username']."&quot;\non ".$modx->toDateFormat($lockedResources[$id]['lasthit']). '"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></span>' : '';
         $url = $modx->makeUrl($id);
 
         $alt = '';
@@ -104,7 +116,8 @@ function makeHTML($indent,$parent,$expandAll,$theme) {
             'donthit' =>$donthit,'hidemenu' =>$hidemenu,'alias' =>$alias,'contenttype' =>$contentType,'privateweb' =>$privateweb,
             'privatemgr' =>$privatemgr,'hasAccess' => $hasAccess, 'template' => $template,
             'nodetitle' => $nodetitle, 'spacer' => $spacer, 'pad' => $pad, 'url' => $url, 'alt' => $alt,
-            'nodetitleDisplay' => $nodetitleDisplay,'weblinkDisplay' => $weblinkDisplay,'pageIdDisplay' => $pageIdDisplay
+            'nodetitleDisplay' => $nodetitleDisplay,'weblinkDisplay' => $weblinkDisplay,'pageIdDisplay' => $pageIdDisplay, 
+            'lockedByUser'=>$lockedByUser
         );
         // invoke OnManagerNodePrerender event
         
@@ -309,7 +322,7 @@ function getTplSingleNode() {
         class="treeNode"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         oncontextmenu="document.getElementById(\'p[+id+]\').onclick(event);return false;"
-        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span>[+pageIdDisplay+]</div>';
+        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+][+lockedByUser+]</div>';
 }
 
 function getTplOpenFolderNode() {
@@ -341,7 +354,7 @@ function getTplOpenFolderNode() {
         class="treeNode"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         oncontextmenu="document.getElementById(\'f[+id+]\').onclick(event);return false;"
-        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span>[+pageIdDisplay+]<div style="display:block">';
+        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+][+lockedByUser+]<div style="display:block">';
 }
 
 function getTplClosedFolderNode() {
@@ -373,5 +386,5 @@ function getTplClosedFolderNode() {
         class="treeNode"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         oncontextmenu="document.getElementById(\'f[+id+]\').onclick(event);return false;"
-        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+]<div style="display:none"></div></div>';
+        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+][+lockedByUser+]<div style="display:none"></div></div>';
 }
