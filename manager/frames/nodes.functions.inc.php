@@ -92,7 +92,7 @@ function makeHTML($indent,$parent,$expandAll,$theme) {
         
         $weblinkDisplay = $type=='reference' ? sprintf('&nbsp;<img src="%s">',$_style['tree_linkgo']) : '' ;
         $pageIdDisplay = '<small>('.($modx_textdir ? '&rlm;':'').$id.')</small>';
-        $lockedByUser = isset($lockedResources[$id]) ? ' <span class="lockedResource" title="Locked by user &quot;'. $lockedResources[$id]['username']."&quot;\non ".$modx->toDateFormat($lockedResources[$id]['lasthit']). '"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></span>' : '';
+        $lockedByUser = isset($lockedResources[$id]) ? '<span class="lockedResource" title="Locked by user &quot;'. $lockedResources[$id]['username']."&quot;\non ".$modx->toDateFormat($lockedResources[$id]['lasthit']). '"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></span>' : '';
         $url = $modx->makeUrl($id);
 
         $alt = '';
@@ -314,7 +314,7 @@ function getTplSingleNode() {
         onmouseover="setCNS(this, 1)"
         onmouseout="setCNS(this, 0)"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\'"
-    />&nbsp;<span
+    />&nbsp;[+lockedByUser+]<span
         p="[+parent+]"
         onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this,1);"
@@ -322,7 +322,7 @@ function getTplSingleNode() {
         class="treeNode"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         oncontextmenu="document.getElementById(\'p[+id+]\').onclick(event);return false;"
-        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+][+lockedByUser+]</div>';
+        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+]</div>';
 }
 
 function getTplOpenFolderNode() {
@@ -347,14 +347,14 @@ function getTplOpenFolderNode() {
         onmouseover="setCNS(this, 1)"
         onmouseout="setCNS(this, 0)"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
-        />&nbsp;<span
+        />&nbsp;[+lockedByUser+]<span
         onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this, 1);"
         onmouseout="setHoverClass(this, 0);"
         class="treeNode"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         oncontextmenu="document.getElementById(\'f[+id+]\').onclick(event);return false;"
-        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+][+lockedByUser+]<div style="display:block">';
+        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+]<div style="display:block">';
 }
 
 function getTplClosedFolderNode() {
@@ -379,12 +379,12 @@ function getTplClosedFolderNode() {
         onmouseover="setCNS(this, 1)"
         onmouseout="setCNS(this, 0)"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
-        />&nbsp;<span
+        />&nbsp;[+lockedByUser+]<span
         onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this, 1);"
         onmouseout="setHoverClass(this, 0);"
         class="treeNode"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         oncontextmenu="document.getElementById(\'f[+id+]\').onclick(event);return false;"
-        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+][+lockedByUser+]<div style="display:none"></div></div>';
+        title="[+alt+]">[+nodetitleDisplay+][+weblinkDisplay+]</span> [+pageIdDisplay+]<div style="display:none"></div></div>';
 }
