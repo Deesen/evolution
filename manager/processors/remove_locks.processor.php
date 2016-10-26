@@ -14,7 +14,7 @@ if(!isset($_GET['id'])) {
 	// Ajax: Handle single-ID unlock requests
 	$id = intval($_GET['id']);
 	if($id) {
-		if($modx->db->delete($modx->getFullTableName('active_users'), "id='{$id}'")) echo '1';
+		if($modx->db->delete($modx->getFullTableName('active_users'), "id='{$id}' AND action='27'")) echo '1';
 		else echo 'Unknown error occured';
 		exit;
 	}
