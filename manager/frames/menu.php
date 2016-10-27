@@ -137,7 +137,8 @@ $mxla = $modx_lang_attribute ? $modx_lang_attribute : 'en';
 		top.tree.saveFolderState(); // save folder state
 		setTimeout('top.tree.restoreTree()',200);
 	}
-
+	var reloadTreeInterval = window.setInterval("reloadtree()", 1000 * 10);
+	
 	function reloadmenu() {
 <?php if($manager_layout==0) { ?>
 		var elm = $('buildText');

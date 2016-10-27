@@ -165,6 +165,25 @@ window.addEvent('domready', function(){
 // save tree folder state
 if (parent.tree) parent.tree.saveFolderState();
 
+// Lock resource in session.js
+var keepMeLockedInterval = window.setInterval("keepMeLocked()", 1000 * 1);
+function keepMeLocked() {
+	var id = <?php echo $id ? $id : '"new"'; ?>;
+	if(window.opener) {
+		// "Edit resource" in pop-up with original opener existing
+		window.opener.top.mainMenu.lockResource(id);
+	} else if(top.mainMenu) {
+		// "Edit resource" in main-frame
+		top.mainMenu.lockResource(id);
+	} else {
+		// "Edit resource" in pop-up with lost opener (opener-window reloaded etc)
+		clearInterval(keepMeLockedInterval);
+		alert('This resource (ID '+id+') is not locked anymore.');
+	}
+}
+
+keepMeLocked();
+
 function changestate(element) {
     currval = eval(element).value;
     if (currval==1) {

@@ -40,6 +40,13 @@ $modx->invokeEvent('OnManagerPreFrameLoader',array('action'=>$action));
             height:16px;
         }
     </style>
+	<script>
+		var resourcesOpen = 0;
+		window.onbeforeunload = function() {
+			if (resourcesOpen) return true;
+			else return null;
+		}
+	</script>
 </head>
 <body>
     <div id="resizer">

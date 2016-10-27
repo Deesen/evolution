@@ -46,11 +46,11 @@ function makeHTML($indent,$parent,$expandAll,$theme) {
 
     // check which resources are locked
     $lockedResources = array();
-    $where = sprintf("action=27 AND internalKey!='%s'", $modx->getLoginUserID());
-    $result = $modx->db->select('id,username,lasthit', $tblau, $where);
+    $where = "action=27";
+    $result = $modx->db->select('id,username,lasthit,internalKey', $tblau, $where);
     while($row = $modx->db->getRow($result))
     {
-        $lockedResources[$row['id']] = array('username'=>$row['username'], 'lasthit'=>$row['lasthit']);
+        $lockedResources[$row['id']] = array('username'=>$row['username'], 'lasthit'=>$row['lasthit'], 'internalKey'=>$row['internalKey']);
     }
     
     // get document groups for current user
@@ -95,12 +95,18 @@ function makeHTML($indent,$parent,$expandAll,$theme) {
 	    
 	    $lockedByUser = '';
 	    if(isset($lockedResources[$id])) {
-		    $title = 'Locked by user &quot;'. $lockedResources[$id]['username']."&quot;\non ".$modx->toDateFormat($lockedResources[$id]['lasthit']);
-		    if($modx->hasPermission('remove_locks')) {
-			    $lockedByUser = '<a href="#" onclick="unlockResource('.$id.', this);return false;" title="'.$title.'" class="lockedResource"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></a>';
+		    if($lockedResources[$id]['internalKey'] == $modx->getLoginUserID()) {
+			    $title = "You are editing this resource since\n".$modx->toDateFormat($lockedResources[$id]['lasthit']);
+			    $lockedByUser = '<span title="'.$title.'" class="editResource"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/eye.png" /></span>&nbsp;';
 		    } else {
-			    $lockedByUser = '<span title="'.$title.'" class="lockedResource"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></span>';
+			    $title = 'Locked by user &quot;'. $lockedResources[$id]['username']."&quot;\non ".$modx->toDateFormat($lockedResources[$id]['lasthit']);
+			    if($modx->hasPermission('remove_locks')) {
+				    $lockedByUser = '<a href="#" onclick="unlockResource('.$id.', this);return false;" title="'.$title.'" class="lockedResource"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></a>';
+			    } else {
+				    $lockedByUser = '<span title="'.$title.'" class="lockedResource"><img src="media/style/'.$modx->config['manager_theme'].'/images/icons/lock.png" /></span>';
+			    }
 		    }
+			    
 	    }
 	    
         $url = $modx->makeUrl($id);
@@ -326,7 +332,7 @@ function getTplSingleNode() {
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\'"
     />&nbsp;[+lockedByUser+]<span
         p="[+parent+]"
-        onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
+        onclick="treeAction(event,[+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this,1);"
         onmouseout="setHoverClass(this, 0);"
         class="treeNode"
@@ -358,7 +364,7 @@ function getTplOpenFolderNode() {
         onmouseout="setCNS(this, 0)"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         />&nbsp;[+lockedByUser+]<span
-        onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
+        onclick="treeAction(event,[+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this, 1);"
         onmouseout="setHoverClass(this, 0);"
         class="treeNode"
@@ -390,7 +396,7 @@ function getTplClosedFolderNode() {
         onmouseout="setCNS(this, 0)"
         onmousedown="itemToChange=[+id+]; selectedObjectName=\'[+nodetitle_esc+]\'; selectedObjectDeleted=[+deleted+]; selectedObjectUrl=\'[+url+]\';"
         />&nbsp;[+lockedByUser+]<span
-        onclick="treeAction([+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
+        onclick="treeAction(event,[+id+],\'[+nodetitle_esc+]\'); setSelected(this);"
         onmouseover="setHoverClass(this, 1);"
         onmouseout="setHoverClass(this, 0);"
         class="treeNode"
