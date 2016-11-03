@@ -11,7 +11,7 @@ $ok = false;
 if ($rt = @ include_once('config.inc.php')) {
 // Keep it alive
   startCMSSession();
-  if($_POST['tok'] == md5(session_id())) {
+  if($_REQUEST['tok'] == md5(session_id())) {
       $ok = true;
   }
 }
