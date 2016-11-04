@@ -955,6 +955,13 @@ switch ($action) {
 		include_once(includeFileProcessor("processors/delete_category.processor.php",$manager_theme));
 	break;
 /********************************************************************/
+/* Lock Elements                                                    */
+/********************************************************************/
+	case 998:
+		// Lock elements processor
+		include_once(includeFileProcessor("processors/lock_elements.processor.php",$manager_theme));
+		break;
+/********************************************************************/
 /* default action: show not implemented message                     */
 /********************************************************************/
 	default :

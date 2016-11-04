@@ -2243,6 +2243,66 @@ class DocumentParser {
             $state= ($pms[$pm] == 1);
         return $state;
     }
+    
+    /**
+     * Returns true if element is locked
+     *
+     * @param int $type Types: 1=template, 2=tv, 3=chunk, 4=snippet, 5=plugin, 6=module, 7=content
+     * @param int $id Element- / Resource-id                 
+     * @return string username
+     */
+    function elementIsLocked($type, $id) {
+        if($id == 0) return false;
+        $delay = time() - (isset($this->config['lock_release_delay']) ? intval($this->config['lock_release_delay']) : 30);
+        $rs = $this->db->select('username', $this->getFullTableName('active_user_locks'), "element='{$type}' AND id='{$id}' AND lasthit > '{$delay}' AND internalKey!='".$this->getLoginUserID()."'");
+        return $this->db->getValue($rs);
+    }
+    
+    /**
+     * Locks an element
+     *
+     * @param int $type Types: 1=template, 2=tv, 3=chunk, 4=snippet, 5=plugin, 6=module, 7=content
+     * @param int $id Element- / Resource-id                 
+     */
+    function lockElement($type, $id) {
+        if($id == 0) return false;
+        $sql = sprintf('REPLACE INTO %s (internalKey, username, lasthit, element, id)
+            VALUES (%d, \'%s\', %d, %d, %d)',
+            $this->getFullTableName('active_user_locks'),
+            $this->getLoginUserID(),
+            $_SESSION['mgrShortname'],
+            time(),
+            intval($type),
+            intval($id)
+        );
+        $this->db->query($sql);
+        return true;
+    }
+
+    /**
+     * Unlocks an element
+     *
+     * @param int $type Types: 1=template, 2=tv, 3=chunk, 4=snippet, 5=plugin, 6=module, 7=content
+     * @param int $id Element- / Resource-id                 
+     */
+    function unlockElement($type, $id) {
+        if($id == 0) return false;
+        $sql = sprintf('DELETE FROM %s WHERE internalKey = %d AND element = %d AND id = %d;',
+            $this->getFullTableName('active_user_locks'),
+            $this->getLoginUserID(),
+            intval($type),
+            intval($id)
+        );
+        $this->db->query($sql);
+        return true;
+    }
+    /**
+     * Cleans up the active user locks table
+     */
+    function cleanupLockedTable() {
+        $delay = time() - (isset($this->config['lock_release_delay']) ? intval($this->config['lock_release_delay']) : 30) * 2;
+        $this->db->delete($this->getFullTableName('active_user_locks'), "lasthit < '{$delay}'");
+    }
 
     /**
      * Add an a alert message to the system event log

@@ -190,6 +190,8 @@ if(!isset($_SESSION['mgrValidated'])){
 			$ip
 		);
 		$modx->db->query($sql);
+
+		$modx->cleanupLockedTable();
 	}
 }
 ?>

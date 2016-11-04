@@ -25,11 +25,13 @@ $tbl_site_modules       = $modx->getFullTableName('site_modules');
 $tbl_site_snippets      = $modx->getFullTableName('site_snippets');
 
 // check to see the snippet editor isn't locked
-$rs = $modx->db->select('username', $tbl_active_users, "action=22 AND id='{$id}' AND internalKey!='".$modx->getLoginUserID()."'");
-    if ($username = $modx->db->getValue($rs)) {
-            $modx->webAlertAndQuit(sprintf($_lang['lock_msg'],$username,$_lang['snippet']));
-    }
+if ($username = $modx->elementIsLocked(4, $id)) {
+        $modx->webAlertAndQuit(sprintf($_lang['lock_msg'],$username,$_lang['snippet']));
+}
 // end check for lock
+
+// Lock snippet for other users to edit
+$modx->lockElement(4, $id);
 
 $content = array();
 if(isset($_GET['id'])) {
@@ -54,6 +56,11 @@ if ($modx->manager->hasFormValues()) {
 $content = array_merge($content, $_POST);
 ?>
 <script type="text/javascript">
+<?php
+    $lockElementId = $id;
+    $lockElementType = 4;
+    require_once(MODX_MANAGER_PATH.'includes/active_user_locks.php');
+?>
 
 function duplicaterecord(){
     if(confirm("<?php echo $_lang['confirm_duplicate_record']?>")==true) {
