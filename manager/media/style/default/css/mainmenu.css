@@ -41,6 +41,9 @@
 #mainMenu .nav > li > ul > li > a small { line-height: 1em }
 #mainMenu .account #msgCounter { display: none; position: absolute; z-index: 1; right: 0.4rem; top: 0.4rem; width: 0.4rem; height: 0.4rem; background-color: #FFC107; font-size: 0; border-radius: 50%;; }
 #mainMenu .account #newMail { display: none }
+/* optional buttons */
+button.optional { position: absolute; top: 0; right: 0; padding: 0 10px; z-index: 10; border: none; cursor:pointer; }
+button:hover.optional { background-color:#eee; color:#1976D2; }
 /* statusbar */
 #statusbar { position: relative; width: 1rem; height: 2.2rem; line-height: 2.4rem; font-size: 0.875em; white-space: nowrap; float: left; }
 #statusbar .fa { font-size: 0.875rem }

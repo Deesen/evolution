@@ -346,7 +346,14 @@ $sitemenu['refresh_site'] = array(
 	'main',
 	0,
 	5,
-	''
+	'',
+	array(
+		'button',
+		'optional',
+		'modx.openWindow({url:\'index.php?a=26\', title:\'Clear Cache\'})',
+		$_lang['refresh_site'],
+		'<i class="fa fa-recycle"></i>',
+	)
 );
 
 $sitemenu['search'] = array(

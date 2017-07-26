@@ -70,12 +70,16 @@ class EVOmenu {
 				$ph['LinkAttr'] = $this->getLinkAttr($id);
 				$ph['itemName'] = $value[2] . $this->getItemName($id);
 
+				$ph['DrawSub'] = '';
 				if(isset($this->menu[$id])) {
 					$level++;
 					$ph['DrawSub'] = $this->DrawSub($id, $level);
 					$level--;
-				} else {
-					$ph['DrawSub'] = '';
+				// Optional buttons
+				} else if(isset($value[11]) && !empty($value[11])){
+					$opt = $value[11];
+					$optionalButton = sprintf('<%s class="%s" onclick="%s" title="%s">%s</%s>', $opt[0], $opt[1], $opt[2], $opt[3], $opt[4], $opt[0]);
+					$ph['DrawSub'] = $optionalButton;
 				}
 
 				$output .= $modx->parseText($itemTpl, $ph);
